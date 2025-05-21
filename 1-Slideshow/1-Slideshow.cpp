@@ -43,7 +43,8 @@
 #include <WiFi.h>
 #include <WiFiManager.h>          // WiFiManager to manage Wi-Fi connections
 #include <AsyncTCP.h>             // Async TCP library for WebSocket
-#include <ESPAsyncWebServer.h>    // Async Web Server
+
+#include <AsyncEventSource.h>
 #include <TFT_eSPI.h>             // TFT display library
 #include <XPT2046_Bitbang.h>      // Touch screen library
 #include <SPI.h>
@@ -59,6 +60,7 @@
 #include "esp_task_wdt.h"         // ESP32 Task Watchdog Timer
 #include "esp_heap_caps.h"        // Heap memory debugging
 #include <ESPmDNS.h>
+#include <ElegantOTA.h>  // Using the official ElegantOTA with async mode enabled
 
 // Touch Screen pins
 #define XPT2046_IRQ 36
@@ -82,7 +84,7 @@ AudioOutputI2S *out = nullptr;  // Initialize to nullptr
 SPIClass sdSpi(VSPI);
 SdSpiConfig sdSpiConfig(SD_CS, SHARED_SPI, SD_SCK_MHZ(10), &sdSpi);  // Use SHARED_SPI mode
 SdFat sd;
-SdBaseFile root;
+SdBaseFile sdRoot;
 SdBaseFile jpgFile;
 int16_t currentIndex = 0;
 uint16_t fileCount = 0;
@@ -117,6 +119,8 @@ void onWebSocketEvent(AsyncWebSocket *server, AsyncWebSocketClient *client, AwsE
 // Global variable to store the current image name
 String currentImageName = "";
 
+
+
 // Button interrupt for slideshow control
 void IRAM_ATTR buttonInt() {
   buttonPressed = true;
@@ -130,7 +134,7 @@ int JPEGDraw(JPEGDRAW *pDraw) {
 
 void *myOpen(const char *filename, int32_t *size) {
   jpgFile = sd.open(filename);
-  *size = jpgFile.size();
+  *size = jpgFile.fileSize();
   return &jpgFile;
 }
 
@@ -143,7 +147,36 @@ int32_t myRead(JPEGFILE *handle, uint8_t *buffer, int32_t length) {
 }
 
 int32_t mySeek(JPEGFILE *handle, int32_t position) {
-  return jpgFile.seek(position);
+  return jpgFile.seekSet(position);
+}
+
+// Special function for JPEGDEC file operations with SPIFFS
+void *spiffsOpen(const char *filename, int32_t *size) {
+  File f = SPIFFS.open(filename);
+  if (!f) {
+    Serial.printf("Failed to open %s from SPIFFS\n", filename);
+    return NULL;
+  }
+  *size = f.size();
+  return (void *)new File(f);
+}
+
+void spiffsClose(void *handle) {
+  if (handle) {
+    File *f = (File *)handle;
+    f->close();
+    delete f;
+  }
+}
+
+int32_t spiffsRead(JPEGFILE *handle, uint8_t *buffer, int32_t length) {
+  File *f = (File *)handle->fHandle;
+  return f->read(buffer, length);
+}
+
+int32_t spiffsSeek(JPEGFILE *handle, int32_t position) {
+  File *f = (File *)handle->fHandle;
+  return f->seek(position);
 }
 
 // Stop the slideshow by releasing the resources and stopping the decoder
@@ -168,12 +201,12 @@ void loadImage(uint16_t targetIndex) {
   if (!slideshowActive) return;
 
   if (targetIndex >= fileCount) targetIndex = 0;
-  root.rewind();
+  sdRoot.rewind();
   uint16_t index = 0;
   SdBaseFile entry;
   char name[100];
-  while (entry.openNext(&root)) {
-    if (!entry.isDirectory()) {
+  while (entry.openNext(&sdRoot)) {
+    if (!entry.isSubDir()) {
       entry.getName(name, sizeof(name));
       if (strcasecmp(name + strlen(name) - 3, "JPG") == 0) {
         if (index == targetIndex) {
@@ -449,11 +482,11 @@ void handleFileUpload(AsyncWebServerRequest *request) {
   request->send(200, "text/html", html);
 
   // Rebuild the file list after upload
-  root.rewind();
+  sdRoot.rewind();
   fileCount = 0;
   SdBaseFile fileEntry;
   char name[100];
-  while (fileEntry.openNext(&root)) {
+  while (fileEntry.openNext(&sdRoot)) {
     fileEntry.getName(name, sizeof(name));
     if (strcasecmp(name + strlen(name) - 3, "JPG") == 0) {
       fileCount++;
@@ -836,13 +869,13 @@ void setupWebServer() {
           return;
       }
 
-      root.rewind();
+      sdRoot.rewind();
       SdBaseFile entry;
       char name[100];
       bool fileFound = false;
 
       // Iterate through all files
-      while (entry.openNext(&root)) {
+      while (entry.openNext(&sdRoot)) {
           entry.getName(name, sizeof(name));
           Serial.printf("Found file: %s\n", name);
 
@@ -880,7 +913,7 @@ void setupWebServer() {
       int params = request->params();
       bool deletionSuccess = true;
       for (int i = 0; i < params; i++) {
-          AsyncWebParameter* p = request->getParam(i);
+          const AsyncWebParameter* p = request->getParam(i);
           if (p->isPost()) {
               String fileToDelete = "/" + p->value();
               if (sd.exists(fileToDelete.c_str())) {
@@ -1199,8 +1232,8 @@ void setupWebServer() {
 
 // QR Code display function
 void displayQRCode(String ip) {
-  // Append :8080 to the IP address for the web server
-  String url = "http://" + ip + ":8080";
+  // Remove port number - use default port 80
+  String url = "http://" + ip;
 
   QRCode qrcode;
   uint8_t qrcodeData[qrcode_getBufferSize(4)];
@@ -1223,7 +1256,7 @@ void displayQRCode(String ip) {
 // Function to show Wi-Fi information, then QR code
 void displayMessageAndQRCode(String ip) {
   // Append :8080 to the IP address for the web server
-  String fullIP = ip + ":8080";
+ // String fullIP = ip + ":8080";
 
   tft.fillScreen(TFT_BLACK);
   tft.setCursor(0, 0);
@@ -1276,12 +1309,14 @@ void displayMessageAndQRCode(String ip) {
       delay(1000);
   }
 
-    displayQRCode(ip);  // Show QR code with IP and port 8080
+    displayQRCode(ip);  // Show QR code with IP 
     delay(5000);  // Show QR code for 5 seconds
 }
 
 void setup() {
   Serial.begin(115200);
+ 
+
   pinMode(0, INPUT);
   attachInterrupt(0, buttonInt, FALLING);
   pinMode(4, OUTPUT); digitalWrite(4, HIGH);
@@ -1307,26 +1342,55 @@ void setup() {
   tft.writedata(1);  
 #endif
 
-  tft.setTextSize(3);
-  tft.setSwapBytes(true);
-   // Set the viewport to constrain the display within 320x240 resolution
-    tft.setViewport(0, 0, 320, 240);
-    // Initialize SPIFFS
-    if (!SPIFFS.begin(true)) {  // 'true' will format the partition if SPIFFS is not initialized
-      Serial.println("SPIFFS Mount Failed");
-      return;  // Stop further execution if SPIFFS mount fails
-    }
-    fs::File jpegFile = SPIFFS.open("/vanity.jpg", "r");  // Open the image file from SPIFFS
+tft.setTextSize(3);
+tft.setSwapBytes(true);
+// Set the viewport to constrain the display within 320x240 resolution
+tft.setViewport(0, 0, 320, 240);
 
-    if (!jpegFile) {
-      Serial.println("Failed to open the file!");
-      return;
-    }
+// Initialize SPIFFS (removed duplicate initialization)
+if (!SPIFFS.begin(true)) {  // 'true' will format the partition if SPIFFS is not initialized
+  Serial.println("SPIFFS Mount Failed");
+  return;  // Stop further execution if SPIFFS mount fails
+}
 
-    // Pass the opened file and the existing JPEGDraw function to the JPEG decoder
-    jpeg.open(jpegFile, JPEGDraw);  // Use your existing JPEGDraw as the callback
-    jpeg.decode(0, 0, 0);  // Decode without any scaling by passing 0 as the scale option
-    jpegFile.close();
+// List contents
+Serial.println("Listing files in SPIFFS:");
+File spiffsRoot = SPIFFS.open("/");
+if (!spiffsRoot || !spiffsRoot.isDirectory()) {
+  Serial.println("Failed to open SPIFFS root directory.");
+} else {
+  File file = spiffsRoot.openNextFile();
+  while (file) {
+    Serial.printf("  %s (%d bytes)\n", file.name(), file.size());
+    file = spiffsRoot.openNextFile();
+  }
+}
+
+// Replace the existing vanity.jpg loading code with:
+// Try to open and display vanity.jpg using the proper File-specific JPEGDEC methods
+if (SPIFFS.exists("/vanity.jpg")) {
+  tft.fillScreen(TFT_BLACK);
+  
+  if (jpeg.open("/vanity.jpg", spiffsOpen, spiffsClose, spiffsRead, spiffsSeek, JPEGDraw)) {
+    Serial.println("Decoding vanity.jpg from SPIFFS...");
+    jpeg.decode(0, 0, 0);
+    jpeg.close();
+    Serial.println("Successfully displayed vanity.jpg from SPIFFS.");
+  } else {
+    Serial.println("Failed to decode vanity.jpg with JPEGDEC.");
+    // Display error message on screen
+    tft.setCursor(20, 100);
+    tft.setTextColor(TFT_RED);
+    tft.println("Failed to load");
+    tft.setCursor(20, 130);
+    tft.println("splash image");
+  }
+} else {
+  Serial.println("vanity.jpg not found in SPIFFS. Continuing without it.");
+}
+
+
+
 
     delay(10000);  // Wait for 10 seconds
 
@@ -1429,27 +1493,32 @@ void setup() {
     displayMessageAndQRCode(ip);
 
     // Initialize SD card
-    if (!checkAndMountSDCard()) {
-      error("SD Card Mount Failed");
-    } else {
-      root.open("/");
-      fileCount = 0;
-      SdBaseFile fileEntry;
-      char name[100];
-      while (fileEntry.openNext(&root)) {
-        fileEntry.getName(name, sizeof(name));
-        if (strcasecmp(name + strlen(name) - 3, "JPG") == 0) {
-          fileCount++;
-        }
-        fileEntry.close();
+if (!checkAndMountSDCard()) {
+  error("SD Card Mount Failed");
+} else {
+  sdRoot = sd.open("/");
+  if (!sdRoot) {
+    error("Failed to open SD root directory.");
+  } else {
+    fileCount = 0;
+    SdBaseFile fileEntry;
+    char name[100];
+    while (fileEntry.openNext(&sdRoot, O_RDONLY)) {
+      fileEntry.getName(name, sizeof(name));
+      if (strcasecmp(name + strlen(name) - 3, "JPG") == 0) {
+        fileCount++;
       }
-      Serial.printf("Found %d images.\n", fileCount);
+      fileEntry.close();
     }
-
-    if (fileCount == 0) error("No .JPG images found");
-    currentIndex = 0;
-    loadImage(currentIndex);
+    Serial.printf("Found %d images.\n", fileCount);
+  }
 }
+
+if (fileCount == 0) error("No .JPG images found");
+currentIndex = 0;
+loadImage(currentIndex);
+}
+
 
 void loop() {
   if (fileCount > 0) {
