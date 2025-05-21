@@ -1,5 +1,5 @@
 /*
-  PhotoFrame 2.0 - Slideshow with Web Interface, WAV Playback, and WebSocket Synchronization
+  PhotoFrame 2.2 - Slideshow with Web Interface, WAV Playback, and WebSocket Synchronization
 
   This project creates an advanced ESP32-powered photo frame that displays a slideshow of images,
   hosts a web interface for controlling slideshow speed, uploading/deleting images, and plays
@@ -532,7 +532,7 @@ void setupWebServer() {
     <!DOCTYPE html>
     <html>
     <head>
-      <title>PhotoFrame 2.0</title>
+      <title>PhotoFrame 2.2</title>
       <style>
         body {
           font-family: Arial, sans-serif;
@@ -574,7 +574,7 @@ void setupWebServer() {
       </style>
     </head>
     <body>
-      <h1>PhotoFrame 2.0</h1>
+      <h1>PhotoFrame 2.2</h1>
       <div class="container">
         <p>Use the following options:</p>
         <a href="/upload_file" class="button">Upload a New Image</a>
@@ -1003,7 +1003,7 @@ void setupWebServer() {
     <!DOCTYPE html>
     <html>
     <head>
-      <title>About PhotoFrame 2.0</title>
+      <title>About PhotoFrame 2.2</title>
       <style>
         body {
           font-family: Arial, sans-serif;
@@ -1051,7 +1051,7 @@ void setupWebServer() {
       </style>
     </head>
     <body>
-      <h1>About PhotoFrame 2.0</h1>
+      <h1>About PhotoFrame 2.2</h1>
       <div class="container">
         <p>This project creates an advanced ESP32-powered photo frame that displays a slideshow of images, hosts a web interface for controlling slideshow speed, uploading/deleting images, and plays audio using the built-in DAC.</p>
         <h3>Created by:</h3>
