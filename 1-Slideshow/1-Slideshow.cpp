@@ -515,15 +515,16 @@ void handleFileUpload(AsyncWebServerRequest *request) {
 }
 
 // WebSocket event handler
-void onWebSocketEvent(AsyncWebSocket *server, AsyncWebSocketClient *client, AwsEventType type,
-                      void *arg, uint8_t *data, size_t len) {
+void onWebSocketEvent(AsyncWebSocket *server, AsyncWebSocketClient *client, AwsEventType type, void *arg, uint8_t *data, size_t len) {
   if (type == WS_EVT_CONNECT) {
     Serial.printf("WebSocket client #%u connected from %s\n", client->id(), client->remoteIP().toString().c_str());
+    // Let the client know the current image immediately when they connect
+    client->text("update");
   } else if (type == WS_EVT_DISCONNECT) {
     Serial.printf("WebSocket client #%u disconnected\n", client->id());
   }
 }
-
+// Setup the web server, including routes for speed, upload, delete, and slideshow
 // Setup the web server, including routes for speed, upload, delete, and slideshow
 void setupWebServer() {
   server.on("/", HTTP_GET, [](AsyncWebServerRequest *request){
@@ -1058,7 +1059,7 @@ void setupWebServer() {
         <h3>Special Thanks to the following libraries and developers:</h3>
         <ul>
           <li>WiFiManager by tzapu</li>
-          <li>ESPAsyncWebServer by me-no-dev</li>
+          <li>ESPAsyncWebServer (AsyncWebServer)</li>
           <li>TFT_eSPI by Bodmer</li>
           <li>XPT2046_Bitbang by nitek</li>
           <li>SdFat by Greiman</li>
@@ -1143,77 +1144,126 @@ void setupWebServer() {
       <div id="main-content">
         <img id="slideshow" src="/current_image">
       </div>
-      <script>
-        var gateway = `ws://${window.location.hostname}/ws`;
-        var websocket;
-        
-        window.addEventListener('load', onLoad);
-        window.addEventListener('beforeunload', function() {
-          if (websocket) {
-            websocket.close();
-          }
-        });
-        
-        function onLoad(event) {
-          initWebSocket();
-        }
-        
-        function initWebSocket() {
-          console.log('Trying to open a WebSocket connection...');
-          websocket = new WebSocket(gateway);
-          websocket.onopen = function(event) {
-            console.log('Connection opened');
-          };
-          websocket.onclose = function(event) {
-            console.log('Connection closed');
-          };
-          websocket.onmessage = function(event) {
-            if (event.data === 'update') {
-              var img = document.getElementById('slideshow');
-              img.src = '/current_image?t=' + new Date().getTime();
-            }
-          };
-        }
-      </script>
+
+
+<script>
+  var gateway = `ws://${window.location.hostname}/ws`;
+  var websocket;
+  
+  window.addEventListener('load', onLoad);
+  window.addEventListener('beforeunload', function() {
+    if (websocket) {
+      websocket.close();
+    }
+  });
+  
+  function onLoad(event) {
+    initWebSocket();
+    // Load initial image
+    updateImage();
+  }
+  
+  function initWebSocket() {
+    console.log('Trying to open a WebSocket connection...');
+    websocket = new WebSocket(gateway);
+    websocket.onopen = function(event) {
+      console.log('Connection opened');
+    };
+    websocket.onclose = function(event) {
+      console.log('Connection closed');
+      // Try to reconnect after a delay
+      setTimeout(initWebSocket, 2000);
+    };
+    websocket.onmessage = function(event) {
+      console.log('WebSocket message received:', event.data);
+      if (event.data === 'update') {
+        updateImage();
+      }
+    };
+  }
+  
+  function updateImage() {
+    console.log('Updating image...');
+    var img = document.getElementById('slideshow');
+    // Add a cache-busting parameter to force a fresh load
+    img.src = '/current_image?nocache=' + new Date().getTime();
+  }
+</script>
     </body>
     </html>
     )rawliteral";
     request->send(200, "text/html", html);
   });
 
-  // Route to serve the current image
-  server.on("/current_image", HTTP_GET, [](AsyncWebServerRequest *request) {
-    if (currentImageName == "") {
-      request->send(404, "text/plain", "No image");
-      return;
-    }
+  // Route to serve the current image - FIXED VERSION
+server.on("/current_image", HTTP_GET, [](AsyncWebServerRequest *request) {
+  if (currentImageName == "") {
+    request->send(404, "text/plain", "No image");
+    return;
+  }
 
+  // Store the current image name at request time
+  String requestImageName = currentImageName;
+  
+  // Create a new scope for the SPI mutex to check file exists
+  {
+    // Take the mutex just to check if the file exists and get its size
     xSemaphoreTake(xSpiMutex, portMAX_DELAY);
-
+    
     SdBaseFile *file = new SdBaseFile();
-    if (!file->open(currentImageName.c_str(), O_RDONLY)) {
-      xSemaphoreGive(xSpiMutex);
+    if (!file->open(requestImageName.c_str(), O_RDONLY)) {
+      Serial.println("Failed to open image file for initial check");
+      xSemaphoreGive(xSpiMutex);  // Release the mutex on error
       delete file;
       request->send(404, "text/plain", "Image not found");
       return;
     }
+    
+    // Get the file size before setting up the chunked response
+    uint32_t fileSize = file->fileSize();
+    file->close();
+    delete file;
+    
+    xSemaphoreGive(xSpiMutex);  // Release the mutex after checking file exists
+    Serial.println("Image file exists, setting up chunked response");
+  }
 
-    AsyncWebServerResponse *response = request->beginChunkedResponse("image/jpeg",
-      [file](uint8_t *buffer, size_t maxLen, size_t index) mutable -> size_t {
-        size_t bytesRead = file->read(buffer, maxLen);
-        if (bytesRead == 0) {
-          file->close();
-          delete file;
-          xSemaphoreGive(xSpiMutex);
-        }
-        return bytesRead;
-      });
+  // Create a self-contained response handler that manages its own mutex
+  // Pass the current image name by value to the lambda
+  AsyncWebServerResponse *response = request->beginChunkedResponse("image/jpeg",
+    [requestImageName](uint8_t *buffer, size_t maxLen, size_t index) -> size_t {
+      // Each chunk operation takes and releases the mutex
+      xSemaphoreTake(xSpiMutex, portMAX_DELAY);
+      
+      // Open the file for each chunk to avoid keeping file handles between chunks
+      SdBaseFile file;
+      if (!file.open(requestImageName.c_str(), O_RDONLY)) {
+        Serial.println("Failed to open image file during chunked read");
+        xSemaphoreGive(xSpiMutex);
+        return 0;  // End of file or error
+      }
+      
+      // Seek to the current position
+      if (index > 0) {
+        file.seekSet(index);
+      }
+      
+      // Read the data
+      size_t bytesRead = file.read(buffer, maxLen);
+      
+      // Close file and release mutex
+      file.close();
+      xSemaphoreGive(xSpiMutex);
+      
+      return bytesRead;
+    });
 
-    response->addHeader("Content-Disposition", "inline; filename=" + currentImageName);
-    response->addHeader("Access-Control-Allow-Origin", "*");
+  response->addHeader("Content-Disposition", "inline; filename=" + requestImageName);
+  response->addHeader("Access-Control-Allow-Origin", "*");
 
-    request->send(response);
-  });
+  request->send(response);
+});
+
 
   // Initialize WebSocket
   ws.onEvent(onWebSocketEvent);
