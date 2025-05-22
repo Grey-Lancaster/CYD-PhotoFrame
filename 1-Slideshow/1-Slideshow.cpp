@@ -5,7 +5,7 @@
   hosts a web interface for controlling slideshow speed, uploading/deleting images, and plays
   audio using the built-in DAC. It also provides a synchronized slideshow webpage using WebSockets.
 
-  Created by: ChatGPT (OpenAI),  Grey Lancaster, and the Open-Source Community
+  Created by: ChatGPT (OpenAI), Claude AI,  Grey Lancaster, and the Open-Source Community
 
   Special Thanks to the following libraries and developers:
   -------------------------------------------------------------------------------
@@ -20,6 +20,7 @@
   - AudioFileSourceSD by Phil Schatzmann: Provides audio file reading from SD.
   - mDNS (ESP32 Core): Enables access to the device using photoframe.local.
   - FS (ESP32 Core): File system handling.
+  - ElegantOTA by Ayush Sharma
 
   Project Features:
   -------------------------------------------------------------------------------
@@ -351,6 +352,7 @@ void handlePlayMusicRequest(AsyncWebServerRequest *request) {
   <!DOCTYPE html>
   <html>
   <head>
+  <link rel="icon" type="image/x-icon" href="/favicon.ico">
     <title>Play Music</title>
     <style>
       body {
@@ -1055,7 +1057,7 @@ void setupWebServer() {
       <div class="container">
         <p>This project creates an advanced ESP32-powered photo frame that displays a slideshow of images, hosts a web interface for controlling slideshow speed, uploading/deleting images, and plays audio using the built-in DAC.</p>
         <h3>Created by:</h3>
-        <p>ChatGPT (OpenAI), Grey Lancaster, and the Open-Source Community</p>
+        <p>ChatGPT (OpenAI), Claude AI, Grey Lancaster, and the Open-Source Community</p>
         <h3>Special Thanks to the following libraries and developers:</h3>
         <ul>
           <li>WiFiManager by tzapu</li>
@@ -1069,10 +1071,19 @@ void setupWebServer() {
           <li>AudioFileSourceSD by Phil Schatzmann</li>
           <li>mDNS (ESP32 Core)</li>
           <li>FS (ESP32 Core)</li>
+          <li>ElegantOTA by Ayush Sharma</li>
         </ul>
         <p>This project would not be possible without the open-source community and the many talented developers who have contributed to the libraries we utilized.</p>
         <a href="/" class="button">Go Back to Main Page</a>
+   
+      
+      <!-- OTA Update Link -->
+      <div class="row mb-3">
+        <div class="col text-center">
+          <a href="/update" class="button" title="Click here to upload a new firmware .bin file">OTA Update</a>
+        </div>
       </div>
+    </div>
     </body>
     </html>
     )rawliteral";
@@ -1273,7 +1284,8 @@ server.on("/current_image", HTTP_GET, [](AsyncWebServerRequest *request) {
   server.onNotFound([](AsyncWebServerRequest *request){
       request->send(404, "text/html", "<h3>404 - Page Not Found</h3>");
   });
-
+  
+server.serveStatic("/favicon.ico", SPIFFS, "/favicon.ico").setCacheControl("max-age=86400");
   // Start the web server
   Serial.println("Starting web server...");
   server.begin();
@@ -1516,6 +1528,23 @@ if (SPIFFS.exists("/vanity.jpg")) {
   } else {
     Serial.println("mDNS started: photoframe.local");
   }
+    // Set up OTA update page using ElegantOTA
+  ElegantOTA.begin(&server);
+  ws.onEvent(onWebSocketEvent);
+  server.addHandler(&ws);
+
+  ElegantOTA.onStart([]() {
+    Serial.println("OTA update started");
+  });
+  ElegantOTA.onEnd([](bool success) {
+    Serial.println("OTA update finished. Rebooting...");
+    if (success) {
+      Serial.println("Update successful");
+    } else {
+      Serial.println("Update failed");
+    }
+    delay(1000);
+  });
 
     // Now that Wi-Fi is connected, set up the web server
     setupWebServer();
@@ -1579,9 +1608,9 @@ void loop() {
       buttonPressed = false;
     }
   }
-
+ ElegantOTA.loop();
   ws.cleanupClients();  // Clean up WebSocket clients
 
 
-  delay(1);  // Yield to other tasks
+  delay(10); // Yield to other tasks
 }
