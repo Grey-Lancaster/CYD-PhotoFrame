@@ -79,8 +79,8 @@ Access the web interface at `<device-IP>` (e.g., `192.168.1.x`) to:
 ## Advanced Features
 
 - **mDNS**: Access your device via `photoframe.local` without needing the IP address.
-- **~~OTA Updates~~**: ~~Update firmware using ElegantOTA by navigating to `/update` on the web interface.~~ *(Not yet implemented)*
-- **Customization**: Modify the vanity screen (`vanity.jpg`) for personalized branding.
+- **OTA Updates~~**: Update firmware using ElegantOTA by navigating to `/update` on the web interface.
+- - **Customization**: Modify the vanity screen (`vanity.jpg`) for personalized branding.
 
 ---
 
