@@ -4,6 +4,16 @@ A feature-rich photo frame project powered by the ESP32 microcontroller with a b
 
 ---
 
+## 🚀 Easiest Way to Install
+
+The quickest way to get PhotoFrame running is to use the **Web Installer** here:  
+[**➡ CYD-PhotoFrame Web Installer**](https://grey-lancaster.github.io/CYD-PhotoFrame/)
+
+This method lets you flash the firmware directly from your browser — no additional tools required.  
+If you prefer, you can follow the **PlatformIO instructions below** to build and upload from source.
+
+---
+
 ## Features
 
 - **TFT Display**: Displays photos and other instructions on a 320x240 resolution.
@@ -31,7 +41,7 @@ You can purchase this board on:
 
 ---
 
-## Setup Instructions
+## Setup Instructions (PlatformIO Method)
 
 1. **Prepare the Filesystem**:
    - Create a `data` folder in your project directory.
@@ -80,7 +90,7 @@ Access the web interface at `<device-IP>` (e.g., `192.168.1.x`) to:
 
 - **mDNS**: Access your device via `photoframe.local` without needing the IP address.
 - **OTA Updates~~**: Update firmware using ElegantOTA by navigating to `/update` on the web interface.
-- - **Customization**: Modify the vanity screen (`vanity.jpg`) for personalized branding.
+- **Customization**: Modify the vanity screen (`vanity.jpg`) for personalized branding.
 
 ---
 
@@ -111,4 +121,3 @@ This project is licensed under the [MIT License](LICENSE).
 ## About
 
 Developed by **Grey Lancaster**. Thanks to the open-source community for inspiration and support.
-
