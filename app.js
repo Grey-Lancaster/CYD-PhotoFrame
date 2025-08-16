@@ -1,4 +1,4 @@
-// ---- Config / constants ----
+// ---- Config ----
 const API = "https://api.particle.io/v1";
 const TOKEN_KEY = "particle_token";
 
@@ -21,7 +21,7 @@ const appendLog = (msg) => {
 
 // ---- Token handling ----
 function loadTokenFromHash() {
-  // Allow: .../index.html#token=xxxx
+  // allow .../index.html#token=XXXX
   const m = (location.hash || "").match(/[#&]token=([^&]+)/);
   if (m) {
     const tok = decodeURIComponent(m[1]);
@@ -40,7 +40,7 @@ function saveToken() {
   const tok = $("token").value.trim();
   if (!tok) { setText("authMsg", "Paste a token first."); return; }
   localStorage.setItem(TOKEN_KEY, tok);
-  setText("authMsg", "Token saved."); setTimeout(() => setText("authMsg",""), 1500);
+  setText("authMsg", "Token saved."); setTimeout(() => setText("authMsg",""), 1200);
   bootstrap(tok);
 }
 function clearToken() {
@@ -49,17 +49,14 @@ function clearToken() {
   setText("authMsg", "Token cleared.");
 }
 
-// ---- Generic API helpers ----
-function authHeaders(token) {
-  return { "Authorization": `Bearer ${token}` };
-}
+// ---- API helpers ----
+function authHeaders(token) { return { "Authorization": `Bearer ${token}` }; }
 
 async function apiGetJson(url, token) {
   const res = await fetch(url, { headers: authHeaders(token) });
   if (!res.ok) throw new Error(`HTTP ${res.status}`);
   return res.json();
 }
-
 async function apiPostForm(url, token, data) {
   const res = await fetch(url, {
     method: "POST",
@@ -70,21 +67,19 @@ async function apiPostForm(url, token, data) {
   return res.json();
 }
 
-// ---- Particle endpoints (no SDK) ----
+// ---- Particle endpoints ----
 async function listDevices(token) {
   return apiGetJson(`${API}/devices`, token); // array
 }
-
 async function getVariable(deviceId, name, token) {
-  return apiGetJson(`${API}/devices/${deviceId}/${name}`, token); // {result, ...}
+  return apiGetJson(`${API}/devices/${deviceId}/${name}`, token); // {result,...}
 }
-
 async function callFunction(deviceId, name, arg, token) {
-  return apiPostForm(`${API}/devices/${deviceId}/${name}`, token, { args: arg });
+  // IMPORTANT: Particle expects 'arg' (singular)
+  return apiPostForm(`${API}/devices/${deviceId}/${name}`, token, { arg });
 }
 
-
-// ---- UI state ----
+// ---- State ----
 let auth = null;
 let currentDeviceId = null;
 let autoTimer = null;
@@ -92,7 +87,7 @@ let evtAbort = null;
 let backoffMs = 1500;
 const backoffMax = 30000;
 
-// ---- Device / reads ----
+// ---- Devices / reads ----
 async function refreshDevices() {
   if (!auth) { setText("authMsg", "No token. Paste and Save first."); return; }
   try {
@@ -101,27 +96,23 @@ async function refreshDevices() {
     sel.innerHTML = "";
     if (!list.length) { setText("authMsg", "No devices for this token."); return; }
 
-    // Build dropdown
     for (const d of list) {
       const opt = document.createElement("option");
       opt.value = d.id;
       opt.textContent = `${d.name || d.id} ${d.online ? "🟢" : "⚪"}`;
       sel.appendChild(opt);
     }
-
     // Prefer Grey_Fox_1 if present
     const preferred = list.find(d => (d.name || "").toLowerCase() === "grey_fox_1");
-    const selected = preferred || list[0];
-    sel.value = selected.id;
-    setDevice(selected.id, selected.online);
+    const chosen = preferred || list[0];
+    sel.value = chosen.id;
+    setDevice(chosen.id, chosen.online);
     setText("authMsg", "");
-
   } catch (e) {
     console.error(e);
     setText("authMsg", `Device list failed: ${e.message || e}`);
   }
 }
-
 function setDevice(id, online) {
   currentDeviceId = id;
   setText("selectedId", id);
@@ -143,18 +134,18 @@ async function readAll() {
     setText("tempOut", isFinite(temp) ? `${temp.toFixed(2)} °F` : String(t.result));
 
     const raw = String(c.result || "");
-    const cleaned = raw.replace(/[^\x20-\x7E]/g, "");
+    const cleaned = raw.replace(/[^\x20-\x7E]/g, ""); // strip non-ASCII
     setText("carrierOut", PLMN[cleaned] || cleaned || "unknown");
 
     const pct = Number(s.result);
     setText("sigOut", isFinite(pct) ? `${pct}%` : String(s.result));
+
     setText("varMsg", "");
   } catch (e) {
     console.error(e);
     setText("varMsg", `Read failed: ${e.message || e}`);
   }
 }
-
 function startAutoReads() {
   if (autoTimer) clearInterval(autoTimer);
   autoTimer = setInterval(readAll, 5000);
@@ -163,24 +154,24 @@ function startAutoReads() {
 
 // ---- Functions (LED) ----
 async function onLedClick(ev) {
-  if (!auth || !currentDeviceId) return;
-  const arg = ev.target.dataset.arg;
+  // IMPORTANT: use currentTarget (the <button>), not target (which could be the inner <code>)
+  const arg = ev.currentTarget?.dataset?.arg;
+  if (!arg) { setText("funcMsg", "No argument found for LED call."); return; }
   try {
     const res = await callFunction(currentDeviceId, "led", arg, auth);
     setText("funcMsg", `Return: ${res.return_value}`);
-    setTimeout(() => setText("funcMsg",""), 1500);
+    setTimeout(() => setText("funcMsg",""), 1200);
   } catch (e) {
     console.error(e);
     setText("funcMsg", `Call failed: ${e.message || e}`);
   }
 }
 
-// ---- Events (SSE via fetch with Authorization header) ----
+// ---- Events (SSE via fetch + Authorization header) ----
 function stopEventStream() {
   if (evtAbort) evtAbort.abort();
   evtAbort = null;
 }
-
 async function startEventStream() {
   stopEventStream();
   if (!auth || !currentDeviceId) return;
@@ -234,7 +225,6 @@ async function startEventStream() {
     scheduleEvtReconnect();
   }
 }
-
 function scheduleEvtReconnect() {
   stopEventStream();
   setTimeout(startEventStream, backoffMs);
@@ -248,7 +238,6 @@ function bootstrap(tok) {
 }
 
 document.addEventListener("DOMContentLoaded", () => {
-  // Wire buttons
   $("saveToken").addEventListener("click", saveToken);
   $("clearToken").addEventListener("click", clearToken);
   $("refreshDevices").addEventListener("click", refreshDevices);
@@ -256,7 +245,6 @@ document.addEventListener("DOMContentLoaded", () => {
     btn.addEventListener("click", onLedClick);
   });
 
-  // Initialize token & start
   const tokHash = loadTokenFromHash();
   const tok = tokHash || loadToken();
   if (tok) bootstrap(tok);
