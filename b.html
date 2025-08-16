@@ -15,13 +15,15 @@
     #log { height: 220px; overflow:auto; background:#0b1020; color:#d6e2ff; padding:10px; border-radius:6px; }
     .muted { color:#666; }
     .error { color:#b00020; font-weight:600; }
+    .ok { color:#1b5e20; }
   </style>
-  <script src="https://unpkg.com/particle-api-js@10.3.0/dist/particle.min.js"></script>
+  <!-- Load our JS after HTML so event handlers always bind -->
+  <script src="app.js" defer></script>
 </head>
 <body>
   <h1>🟦 Boron 404X Dashboard</h1>
   <div class="muted">
-    This page is static (GitHub Pages). Your access token is stored only in your browser.
+    Hosted on GitHub Pages. Your access token is stored only in your browser.
   </div>
 
   <fieldset>
@@ -32,8 +34,9 @@
       <button id="saveToken">Save</button>
       <button id="clearToken" title="Remove token from this browser">Clear</button>
     </div>
-    <div class="muted">Tip: Create a short-lived token with <code>particle token create</code>. You can also open this page with <code>#token=YOUR_TOKEN</code> in the URL to auto-fill.</div>
-    <div id="authErr" class="error"></div>
+    <div class="muted">Tip: Create a short-lived token with <code>particle token create</code>.
+      You can also open this page with <code>#token=YOUR_TOKEN</code> in the URL to auto-fill.</div>
+    <div id="authMsg" class="error"></div>
   </fieldset>
 
   <fieldset>
@@ -52,7 +55,7 @@
     <div class="row"><label>Carrier</label> <strong id="carrierOut">—</strong></div>
     <div class="row"><label>Signal</label> <strong id="sigOut">—</strong> <span class="muted">(0–100%)</span></div>
     <div class="muted">Auto-updates every 5s</div>
-    <div id="varErr" class="error"></div>
+    <div id="varMsg" class="error"></div>
   </fieldset>
 
   <fieldset>
@@ -60,171 +63,16 @@
     <div class="row">
       <button data-arg="on"  class="ledBtn">Call <code>led("on")</code></button>
       <button data-arg="off" class="ledBtn">Call <code>led("off")</code></button>
-      <span id="funcResult"></span>
+      <span id="funcMsg" class="ok"></span>
     </div>
-    <div id="funcErr" class="error"></div>
   </fieldset>
 
   <fieldset>
     <legend>Live events (<code>status</code>)</legend>
     <div id="log"></div>
-    <div id="evtErr" class="error"></div>
+    <div id="evtMsg" class="error"></div>
   </fieldset>
 
-<script>
-  // Minimal PLMN → name map (extend as needed)
-  const PLMN = {
-    "310260": "T-Mobile USA",
-    "310410": "AT&T",
-    "313100": "FirstNet (AT&T)",
-    "311480": "Verizon",
-    "310120": "Sprint (legacy/T-Mobile)"
-  };
-
-  const particle = new Particle();
-  let auth = null;
-  let currentDeviceId = null;
-
-  let autoReadTimer = null;
-  let evtAbort = null;      // for SSE fetch abort
-  let backoffMs = 1500;
-  const backoffMax = 30000;
-
-  const $ = (id) => document.getElementById(id);
-  const setText = (id, t) => { $(id).innerText = t; };
-  const log = (msg) => { const el = $("log"); el.innerText += msg + "\n"; el.scrollTop = el.scrollHeight; };
-
-  // ----- Token handling -----
-  function loadTokenFromUrlHash() {
-    // Support: https://.../index.html#token=XXXX
-    const h = location.hash || "";
-    const m = h.match(/[#&]token=([^&]+)/);
-    if (m) {
-      const tok = decodeURIComponent(m[1]);
-      localStorage.setItem("particle_token", tok);
-      $("token").value = tok;
-      auth = tok;
-    }
-  }
-  function loadToken() {
-    const tok = localStorage.getItem("particle_token") || "";
-    $("token").value = tok;
-    auth = tok || null;
-  }
-  function saveToken() {
-    const tok = $("token").value.trim();
-    if (!tok) {
-      setText("authErr", "Paste a token first.");
-      return;
-    }
-    localStorage.setItem("particle_token", tok);
-    auth = tok;
-    setText("authErr", "");
-    loadDevices();
-  }
-  function clearToken() {
-    localStorage.removeItem("particle_token");
-    $("token").value = "";
-    auth = null;
-    setText("authErr", "Token cleared. Paste a new one to continue.");
-  }
-
-  // ----- Devices -----
-  async function loadDevices() {
-    if (!auth) {
-      setText("authErr", "No token. Paste one and click Save.");
-      return;
-    }
-    setText("authErr", "");
-    try {
-      const { body } = await particle.listDevices({ auth });
-      const sel = $("deviceSelect");
-      sel.innerHTML = "";
-      if (!body.length) {
-        setText("authErr", "No devices found for this token.");
-        return;
-      }
-      body.forEach(d => {
-        const opt = document.createElement("option");
-        opt.value = d.id;
-        opt.textContent = `${d.name || d.id} ${d.online ? "🟢" : "⚪"}`;
-        sel.appendChild(opt);
-      });
-
-      // Prefer Grey_Fox_1 if present, else first device
-      const preferred = body.find(d => (d.name || "").toLowerCase() === "grey_fox_1");
-      const selected = preferred || body[0];
-      sel.value = selected.id;
-      setDevice(selected.id, selected.online);
-
-    } catch (e) {
-      setText("authErr", explainErr(e));
-      console.error(e);
-    }
-  }
-
-  function setDevice(id, online) {
-    currentDeviceId = id;
-    setText("selectedId", id);
-    $("onlineBadge").innerText = online ? "🟢 online" : "⚪ offline";
-    startEventStream();
-    startAutoRead();
-  }
-
-  // ----- Reads -----
-  async function readAll() {
-    if (!currentDeviceId || !auth) return;
-    try {
-      const [t, c, s] = await Promise.all([
-        particle.getVariable({ deviceId: currentDeviceId, name: "tempF",   auth }),
-        particle.getVariable({ deviceId: currentDeviceId, name: "carrier", auth }),
-        particle.getVariable({ deviceId: currentDeviceId, name: "sigPct",  auth })
-      ]);
-      const temp = Number(t.body.result);
-      setText("tempOut", isFinite(temp) ? `${temp.toFixed(2)} °F` : String(t.body.result));
-
-      const rawCarrier = String(c.body.result || "");
-      const cleaned = rawCarrier.replace(/[^\x20-\x7E]/g, ""); // strip non-ASCII weirdness
-      setText("carrierOut", PLMN[cleaned] || cleaned || "unknown");
-
-      const pct = Number(s.body.result);
-      setText("sigOut", isFinite(pct) ? `${pct}%` : String(s.body.result));
-      setText("varErr", "");
-    } catch (e) {
-      setText("varErr", "Read failed: " + explainErr(e));
-      console.error(e);
-    }
-  }
-
-  function startAutoRead() {
-    if (autoReadTimer) clearInterval(autoReadTimer);
-    autoReadTimer = setInterval(readAll, 5000);
-    readAll(); // prime immediately
-  }
-
-  // ----- Functions -----
-  async function callLed(arg) {
-    if (!currentDeviceId || !auth) return;
-    try {
-      const { body } = await particle.callFunction({
-        deviceId: currentDeviceId, name: "led", argument: arg, auth
-      });
-      setText("funcResult", `Return: ${body.return_value}`);
-      setText("funcErr", "");
-    } catch (e) {
-      setText("funcErr", "Function call failed: " + explainErr(e));
-      console.error(e);
-    }
-  }
-
-  // ----- Events (SSE via fetch with Authorization header) -----
-  function stopEventStream() {
-    if (evtAbort) { evtAbort.abort(); }
-    evtAbort = null;
-  }
-
-  async function startEventStream() {
-    stopEventStream();
-    if (!currentDeviceId || !auth) return;
-
-    const url = `https://api.particle.
+  <div class="muted">Build: v1 (no external libs)</div>
+</body>
+</html>
