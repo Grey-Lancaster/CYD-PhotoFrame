@@ -17,14 +17,12 @@
     .error { color:#b00020; font-weight:600; }
     .ok { color:#1b5e20; }
   </style>
-  <!-- Load our JS after HTML so event handlers always bind -->
   <script src="app.js" defer></script>
 </head>
 <body>
   <h1>🟦 Boron 404X Dashboard</h1>
-  <div class="muted">
-    Hosted on GitHub Pages. Your access token is stored only in your browser.
-  </div>
+  <h2>🟦 By Papa Lanc/h2>
+  <div class="muted">Hosted on GitHub Pages. Your token is stored only in this browser.</div>
 
   <fieldset>
     <legend>Auth</legend>
@@ -34,8 +32,10 @@
       <button id="saveToken">Save</button>
       <button id="clearToken" title="Remove token from this browser">Clear</button>
     </div>
-    <div class="muted">Tip: Create a short-lived token with <code>particle token create</code>.
-      You can also open this page with <code>#token=YOUR_TOKEN</code> in the URL to auto-fill.</div>
+    <div class="muted">
+      Tip: create a short-lived token with <code>particle token create</code>.
+      You can also open this page with <code>#token=YOUR_TOKEN</code> to auto-fill.
+    </div>
     <div id="authMsg" class="error"></div>
   </fieldset>
 
@@ -73,6 +73,6 @@
     <div id="evtMsg" class="error"></div>
   </fieldset>
 
-  <div class="muted">Build: v1 (no external libs)</div>
+  <div class="muted">Build: v2 (no external libraries)</div>
 </body>
 </html>
