@@ -80,8 +80,9 @@ async function getVariable(deviceId, name, token) {
 }
 
 async function callFunction(deviceId, name, arg, token) {
-  return apiPostForm(`${API}/devices/${deviceId}/${name}`, token, { arg });
+  return apiPostForm(`${API}/devices/${deviceId}/${name}`, token, { args: arg });
 }
+
 
 // ---- UI state ----
 let auth = null;
