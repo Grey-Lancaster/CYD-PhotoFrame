@@ -84,6 +84,7 @@ let auth = null;
 let currentDeviceId = null;
 let autoTimer = null;
 let evtAbort = null;
+let lastEventTs = 0;
 let backoffMs = 1500;
 const backoffMax = 30000;
 
@@ -148,18 +149,22 @@ async function readAll() {
 }
 function startAutoReads() {
   if (autoTimer) clearInterval(autoTimer);
-  autoTimer = setInterval(readAll, 5000);
-  readAll();
+  autoTimer = setInterval(() => {
+    // Fallback polling if events go quiet for 15s
+    if (Date.now() - lastEventTs > 15000) readAll();
+  }, 60000); // check once per minute
+  readAll(); // initial
 }
 
 // ---- Functions (LED) ----
 async function onLedClick(ev) {
-  // IMPORTANT: use currentTarget (the <button>), not target (which could be the inner <code>)
+  // Use currentTarget (the <button>), not target (which might be inner <code>)
   const arg = ev.currentTarget?.dataset?.arg;
-  if (!arg) { setText("funcMsg", "No argument found for LED call."); return; }
+  if (!auth || !currentDeviceId || !arg) { setText("funcMsg", "LED call missing info."); return; }
   try {
     const res = await callFunction(currentDeviceId, "led", arg, auth);
     setText("funcMsg", `Return: ${res.return_value}`);
+    $("ledState").innerText = `LED: ${arg.toUpperCase()}`;
     setTimeout(() => setText("funcMsg",""), 1200);
   } catch (e) {
     console.error(e);
@@ -211,7 +216,7 @@ async function startEventStream() {
         for (const line of lines) {
           if (line.startsWith("data:")) {
             const data = line.slice(5).trim();
-            if (data) appendLog(`[${new Date().toLocaleTimeString()}] ${data}`);
+            if (data) handleEventData(data);
           }
         }
         pump();
@@ -225,11 +230,34 @@ async function startEventStream() {
     scheduleEvtReconnect();
   }
 }
+function handleEventData(data) {
+  // Try JSON first
+  try {
+    const j = JSON.parse(data);
+    if (typeof j.tempF === "number") setText("tempOut", `${j.tempF.toFixed(2)} °F`);
+    if (typeof j.sigPct === "number") setText("sigOut", `${j.sigPct}%`);
+    if (j.carrier) {
+      const cleaned = String(j.carrier).replace(/[^\x20-\x7E]/g, "");
+      setText("carrierOut", PLMN[cleaned] || cleaned || "unknown");
+    }
+    if (j.led) $("ledState").innerText = `LED: ${String(j.led).toUpperCase()}`;
+  } catch {
+    // Fallback: key=value tokens (old firmware)
+    appendLog(`[${new Date().toLocaleTimeString()}] ${data}`);
+  }
+  lastEventTs = Date.now();
+}
 function scheduleEvtReconnect() {
   stopEventStream();
   setTimeout(startEventStream, backoffMs);
   backoffMs = Math.min(backoffMs * 2, backoffMax);
 }
+
+// Pause SSE when tab hidden to save data
+document.addEventListener("visibilitychange", () => {
+  if (document.hidden) stopEventStream();
+  else startEventStream();
+});
 
 // ---- Bootstrap ----
 function bootstrap(tok) {
@@ -241,6 +269,7 @@ document.addEventListener("DOMContentLoaded", () => {
   $("saveToken").addEventListener("click", saveToken);
   $("clearToken").addEventListener("click", clearToken);
   $("refreshDevices").addEventListener("click", refreshDevices);
+  $("refreshNow").addEventListener("click", readAll);
   document.querySelectorAll(".ledBtn").forEach(btn => {
     btn.addEventListener("click", onLedClick);
   });
