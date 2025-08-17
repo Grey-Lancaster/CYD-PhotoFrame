@@ -21,7 +21,6 @@ const appendLog = (msg) => {
 
 // ---- Token handling ----
 function loadTokenFromHash() {
-  // allow .../index.html#token=XXXX
   const m = (location.hash || "").match(/[#&]token=([^&]+)/);
   if (m) {
     const tok = decodeURIComponent(m[1]);
@@ -75,8 +74,7 @@ async function getVariable(deviceId, name, token) {
   return apiGetJson(`${API}/devices/${deviceId}/${name}`, token); // {result,...}
 }
 async function callFunction(deviceId, name, arg, token) {
-  // IMPORTANT: Particle expects 'arg' (singular)
-  return apiPostForm(`${API}/devices/${deviceId}/${name}`, token, { arg });
+  return apiPostForm(`${API}/devices/${deviceId}/${name}`, token, { arg }); // Particle expects 'arg'
 }
 
 // ---- State ----
@@ -103,7 +101,6 @@ async function refreshDevices() {
       opt.textContent = `${d.name || d.id} ${d.online ? "🟢" : "⚪"}`;
       sel.appendChild(opt);
     }
-    // Prefer Grey_Fox_1 if present
     const preferred = list.find(d => (d.name || "").toLowerCase() === "grey_fox_1");
     const chosen = preferred || list[0];
     sel.value = chosen.id;
@@ -125,21 +122,33 @@ function setDevice(id, online) {
 async function readAll() {
   if (!auth || !currentDeviceId) return;
   try {
-    const [t, c, s] = await Promise.all([
-      getVariable(currentDeviceId, "tempF", auth),
-      getVariable(currentDeviceId, "carrier", auth),
-      getVariable(currentDeviceId, "sigPct", auth),
+    const [bp, bv, bs, c, s] = await Promise.all([
+      getVariable(currentDeviceId, "battPct",  auth),
+      getVariable(currentDeviceId, "battV",    auth),
+      getVariable(currentDeviceId, "battState",auth),
+      getVariable(currentDeviceId, "carrier",  auth),
+      getVariable(currentDeviceId, "sigPct",   auth),
     ]);
 
-    const temp = Number(t.result);
-    setText("tempOut", isFinite(temp) ? `${temp.toFixed(2)} °F` : String(t.result));
+    // Battery
+    const pct = Number(bp.result);
+    setText("battPctOut", isFinite(pct) ? `${pct.toFixed(1)} %` : String(bp.result));
 
+    const v = Number(bv.result);
+    setText("battVOut", isFinite(v) ? `${v.toFixed(3)} V` : String(bv.result));
+
+    // Battery state (numeric fallback mapping)
+    const stateNum = Number(bs.result);
+    const stateStr = battStatePretty(stateNum);
+    setText("battStateOut", stateStr);
+
+    // Carrier & signal
     const raw = String(c.result || "");
-    const cleaned = raw.replace(/[^\x20-\x7E]/g, ""); // strip non-ASCII
+    const cleaned = raw.replace(/[^\x20-\x7E]/g, "");
     setText("carrierOut", PLMN[cleaned] || cleaned || "unknown");
 
-    const pct = Number(s.result);
-    setText("sigOut", isFinite(pct) ? `${pct}%` : String(s.result));
+    const sig = Number(s.result);
+    setText("sigOut", isFinite(sig) ? `${sig}%` : String(s.result));
 
     setText("varMsg", "");
   } catch (e) {
@@ -150,15 +159,13 @@ async function readAll() {
 function startAutoReads() {
   if (autoTimer) clearInterval(autoTimer);
   autoTimer = setInterval(() => {
-    // Fallback polling if events go quiet for 15s
-    if (Date.now() - lastEventTs > 15000) readAll();
+    if (Date.now() - lastEventTs > 15000) readAll(); // fallback if no events in 15s
   }, 60000); // check once per minute
   readAll(); // initial
 }
 
 // ---- Functions (LED) ----
 async function onLedClick(ev) {
-  // Use currentTarget (the <button>), not target (which might be inner <code>)
   const arg = ev.currentTarget?.dataset?.arg;
   if (!auth || !currentDeviceId || !arg) { setText("funcMsg", "LED call missing info."); return; }
   try {
@@ -230,11 +237,13 @@ async function startEventStream() {
     scheduleEvtReconnect();
   }
 }
+
 function handleEventData(data) {
-  // Try JSON first
   try {
     const j = JSON.parse(data);
-    if (typeof j.tempF === "number") setText("tempOut", `${j.tempF.toFixed(2)} °F`);
+    if (typeof j.battPct === "number") setText("battPctOut", `${j.battPct.toFixed(1)} %`);
+    if (typeof j.battV   === "number") setText("battVOut",   `${j.battV.toFixed(3)} V`);
+    if (j.battStateStr) setText("battStateOut", prettify(j.battStateStr));
     if (typeof j.sigPct === "number") setText("sigOut", `${j.sigPct}%`);
     if (j.carrier) {
       const cleaned = String(j.carrier).replace(/[^\x20-\x7E]/g, "");
@@ -242,11 +251,12 @@ function handleEventData(data) {
     }
     if (j.led) $("ledState").innerText = `LED: ${String(j.led).toUpperCase()}`;
   } catch {
-    // Fallback: key=value tokens (old firmware)
+    // Old/non-JSON event fallback: just log it
     appendLog(`[${new Date().toLocaleTimeString()}] ${data}`);
   }
   lastEventTs = Date.now();
 }
+
 function scheduleEvtReconnect() {
   stopEventStream();
   setTimeout(startEventStream, backoffMs);
@@ -258,6 +268,24 @@ document.addEventListener("visibilitychange", () => {
   if (document.hidden) stopEventStream();
   else startEventStream();
 });
+
+// ---- Helpers ----
+function prettify(s) {
+  return String(s).replace(/_/g, " ").replace(/\b\w/g, c => c.toUpperCase());
+}
+function battStatePretty(n) {
+  // Fallback map if we only have the numeric variable
+  const m = {
+    0: "Unknown",
+    1: "Not Charging",
+    2: "Charging",
+    3: "Charged",
+    4: "Discharging",
+    5: "Fault",
+    6: "Disconnected"
+  };
+  return m[n] || "Unknown";
+}
 
 // ---- Bootstrap ----
 function bootstrap(tok) {
