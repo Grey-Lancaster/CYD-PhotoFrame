@@ -16,12 +16,12 @@
     .muted { color:#666; }
     .error { color:#b00020; font-weight:600; }
     .ok { color:#1b5e20; }
+    .pill { display:inline-block; padding:2px 8px; border-radius:999px; border:1px solid #ccc; }
   </style>
   <script src="app.js" defer></script>
 </head>
 <body>
   <h1>🟦 Boron 404X Dashboard</h1>
-  <h2>🟦 By Papa Lanc</h2>
   <div class="muted">Hosted on GitHub Pages. Your token is stored only in this browser.</div>
 
   <fieldset>
@@ -44,7 +44,7 @@
     <div class="row">
       <label>Choose device</label>
       <select id="deviceSelect"></select>
-      <button id="refreshDevices">Refresh</button>
+      <button id="refreshDevices">Refresh devices</button>
     </div>
     <div>Selected: <code id="selectedId">—</code> <span id="onlineBadge" class="muted">offline?</span></div>
   </fieldset>
@@ -54,7 +54,10 @@
     <div class="row"><label>tempF</label> <strong id="tempOut">—</strong></div>
     <div class="row"><label>Carrier</label> <strong id="carrierOut">—</strong></div>
     <div class="row"><label>Signal</label> <strong id="sigOut">—</strong> <span class="muted">(0–100%)</span></div>
-    <div class="muted">Auto-updates every 5s</div>
+    <div class="row">
+      <button id="refreshNow">Refresh now</button>
+      <span class="muted">Auto: event-driven. Falls back to polling if no events.</span>
+    </div>
     <div id="varMsg" class="error"></div>
   </fieldset>
 
@@ -64,6 +67,7 @@
       <button data-arg="on"  class="ledBtn">Call <code>led("on")</code></button>
       <button data-arg="off" class="ledBtn">Call <code>led("off")</code></button>
       <span id="funcMsg" class="ok"></span>
+      <span id="ledState" class="pill">LED: ?</span>
     </div>
   </fieldset>
 
@@ -73,6 +77,6 @@
     <div id="evtMsg" class="error"></div>
   </fieldset>
 
-  <div class="muted">Build: v2 (no external libraries)</div>
+  <div class="muted">Build: v3 (event-driven, low-data)</div>
 </body>
 </html>
