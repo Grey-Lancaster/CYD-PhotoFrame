@@ -67,15 +67,9 @@ async function apiPostForm(url, token, data) {
 }
 
 // ---- Particle endpoints ----
-async function listDevices(token) {
-  return apiGetJson(`${API}/devices`, token); // array
-}
-async function getVariable(deviceId, name, token) {
-  return apiGetJson(`${API}/devices/${deviceId}/${name}`, token); // {result,...}
-}
-async function callFunction(deviceId, name, arg, token) {
-  return apiPostForm(`${API}/devices/${deviceId}/${name}`, token, { arg }); // Particle expects 'arg'
-}
+async function listDevices(token) { return apiGetJson(`${API}/devices`, token); }
+async function getVariable(id, name, token) { return apiGetJson(`${API}/devices/${id}/${name}`, token); }
+async function callFunction(id, name, arg, token) { return apiPostForm(`${API}/devices/${id}/${name}`, token, { arg }); }
 
 // ---- State ----
 let auth = null;
@@ -83,9 +77,10 @@ let currentDeviceId = null;
 let autoTimer = null;
 let evtAbort = null;
 let lastEventTs = 0;
-let latestNextWake = 0; // epoch seconds from device event/vars
+let latestNextWake = 0;
 let backoffMs = 1500;
 const backoffMax = 30000;
+let countdownTimer = null;
 
 // ---- Devices / reads ----
 async function refreshDevices() {
@@ -106,6 +101,7 @@ async function refreshDevices() {
     const chosen = preferred || list[0];
     sel.value = chosen.id;
     setDevice(chosen.id, chosen.online);
+    sel.onchange = () => setDevice(sel.value, true);
     setText("authMsg", "");
   } catch (e) {
     console.error(e);
@@ -120,7 +116,7 @@ function setDevice(id, online) {
   startAutoReads();
 }
 
-// ---- Read variables (fallback path when events are quiet)
+// ---- Read variables (fallback if events are quiet)
 async function readAll() {
   if (!auth || !currentDeviceId) return;
   try {
@@ -138,10 +134,8 @@ async function readAll() {
     // Battery
     const pct = Number(bp.result);
     setText("battPctOut", isFinite(pct) ? `${pct.toFixed(1)} %` : String(bp.result));
-
     const v = Number(bv.result);
     setText("battVOut", isFinite(v) ? `${v.toFixed(3)} V` : String(bv.result));
-
     setText("battStateOut", prettify(String(bs.result || "unknown")));
 
     // Time & runtime
@@ -158,7 +152,6 @@ async function readAll() {
     const raw = String(c.result || "");
     const cleaned = raw.replace(/[^\x20-\x7E]/g, "");
     setText("carrierOut", PLMN[cleaned] || cleaned || "unknown");
-
     const sig = Number(s.result);
     setText("sigOut", isFinite(sig) ? `${sig}%` : String(s.result));
 
@@ -172,11 +165,11 @@ async function readAll() {
 function startAutoReads() {
   if (autoTimer) clearInterval(autoTimer);
   autoTimer = setInterval(() => {
-    // Fallback polling if no events in 20s
-    if (Date.now() - lastEventTs > 20000) readAll();
+    if (Date.now() - lastEventTs > 20000) readAll(); // fallback polling
     setAwakeBadge();
-  }, 60000); // check once per minute
-  readAll(); // initial
+  }, 60000);
+  readAll();
+  startCountdown();
 }
 
 // ---- Functions (LED + clrlog) ----
@@ -190,7 +183,7 @@ async function onLedClick(ev) {
     setTimeout(() => setText("funcMsg",""), 1200);
   } catch (e) {
     console.error(e);
-    setText("funcMsg", `Call failed (device sleeping?): ${e.message || e}`);
+    setText("funcMsg", `Call failed (sleeping?): ${e.message || e}`);
   }
 }
 async function onClearLog() {
@@ -272,7 +265,10 @@ function handleEventData(data) {
     if (typeof j.onBatterySec === "number") setText("onBattOut", toHMS(j.onBatterySec));
 
     if (j.lastWake) setText("lastWakeOut", new Date(j.lastWake*1000).toLocaleString());
-    if (j.nextWake) { setText("nextWakeOut", new Date(j.nextWake*1000).toLocaleString()); latestNextWake = j.nextWake; }
+    if (j.nextWake) { 
+      setText("nextWakeOut", new Date(j.nextWake*1000).toLocaleString());
+      latestNextWake = j.nextWake; 
+    }
 
     if (typeof j.sigPct === "number") setText("sigOut", `${j.sigPct}%`);
     if (j.carrier) {
@@ -281,7 +277,6 @@ function handleEventData(data) {
     }
     if (j.led) $("ledState").innerText = `LED: ${String(j.led).toUpperCase()}`;
   } catch {
-    // Old/non-JSON event fallback: just log it
     appendLog(`[${new Date().toLocaleTimeString()}] ${data}`);
   }
   lastEventTs = Date.now();
@@ -300,9 +295,7 @@ document.addEventListener("visibilitychange", () => {
 });
 
 // ---- UI helpers ----
-function prettify(s) {
-  return String(s).replace(/_/g, " ").replace(/\b\w/g, c => c.toUpperCase());
-}
+function prettify(s) { return String(s).replace(/_/g, " ").replace(/\b\w/g, c => c.toUpperCase()); }
 function toHMS(sec) {
   sec = Math.max(0, Math.floor(Number(sec)||0));
   const h = Math.floor(sec/3600);
@@ -314,5 +307,44 @@ function toHMS(sec) {
 }
 function setAwakeBadge() {
   const badge = $("awakeBadge");
-  // If we received an event in the last 10s, likely awake.
-  const recentEvent = (Date.now() - lastEventTs) < 100
+  const recentEvent = (Date.now() - lastEventTs) < 12000; // last 12s
+  const now = Date.now()/1000;
+  const nearWindow = latestNextWake && now >= (latestNextWake - 3) && now <= (latestNextWake + 25);
+  if (recentEvent || nearWindow) {
+    badge.textContent = "🟢 likely awake";
+    badge.classList.remove("muted");
+  } else {
+    badge.textContent = "⚪ likely sleeping";
+    badge.classList.add("muted");
+  }
+}
+function startCountdown() {
+  if (countdownTimer) clearInterval(countdownTimer);
+  countdownTimer = setInterval(() => {
+    const cd = $("countdown");
+    if (!latestNextWake) { cd.textContent = "—"; return; }
+    const diff = Math.round(latestNextWake - Date.now()/1000);
+    if (diff > 0) cd.textContent = `wakes in ${toHMS(diff)}`;
+    else if (diff > -30) cd.textContent = "awake window";
+    else cd.textContent = "—";
+  }, 1000);
+}
+
+// ---- Bootstrap ----
+function bootstrap(tok) {
+  auth = tok;
+  refreshDevices();
+}
+
+document.addEventListener("DOMContentLoaded", () => {
+  $("saveToken").addEventListener("click", saveToken);
+  $("clearToken").addEventListener("click", clearToken);
+  $("refreshDevices").addEventListener("click", refreshDevices);
+  $("refreshNow").addEventListener("click", readAll);
+  $("clearLogBtn").addEventListener("click", onClearLog);
+  document.querySelectorAll(".ledBtn").forEach(btn => btn.addEventListener("click", onLedClick));
+
+  const tokHash = loadTokenFromHash();
+  const tok = tokHash || loadToken();
+  if (tok) bootstrap(tok);
+});
