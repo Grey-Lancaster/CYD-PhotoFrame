@@ -83,6 +83,7 @@ let currentDeviceId = null;
 let autoTimer = null;
 let evtAbort = null;
 let lastEventTs = 0;
+let latestNextWake = 0; // epoch seconds from device event/vars
 let backoffMs = 1500;
 const backoffMax = 30000;
 
@@ -119,15 +120,19 @@ function setDevice(id, online) {
   startAutoReads();
 }
 
+// ---- Read variables (fallback path when events are quiet)
 async function readAll() {
   if (!auth || !currentDeviceId) return;
   try {
-    const [bp, bv, bs, c, s] = await Promise.all([
-      getVariable(currentDeviceId, "battPct",  auth),
-      getVariable(currentDeviceId, "battV",    auth),
-      getVariable(currentDeviceId, "battState",auth),
-      getVariable(currentDeviceId, "carrier",  auth),
-      getVariable(currentDeviceId, "sigPct",   auth),
+    const [bp, bv, bs, ob, lw, nw, c, s] = await Promise.all([
+      getVariable(currentDeviceId, "battPct",      auth),
+      getVariable(currentDeviceId, "battV",        auth),
+      getVariable(currentDeviceId, "battStateStr", auth),
+      getVariable(currentDeviceId, "onBatterySec", auth),
+      getVariable(currentDeviceId, "lastWake",     auth),
+      getVariable(currentDeviceId, "nextWake",     auth),
+      getVariable(currentDeviceId, "carrier",      auth),
+      getVariable(currentDeviceId, "sigPct",       auth),
     ]);
 
     // Battery
@@ -137,10 +142,17 @@ async function readAll() {
     const v = Number(bv.result);
     setText("battVOut", isFinite(v) ? `${v.toFixed(3)} V` : String(bv.result));
 
-    // Battery state (numeric fallback mapping)
-    const stateNum = Number(bs.result);
-    const stateStr = battStatePretty(stateNum);
-    setText("battStateOut", stateStr);
+    setText("battStateOut", prettify(String(bs.result || "unknown")));
+
+    // Time & runtime
+    const obSec = Number(ob.result) || 0;
+    setText("onBattOut", toHMS(obSec));
+
+    const lastW = Number(lw.result) || 0;
+    const nextW = Number(nw.result) || 0;
+    latestNextWake = nextW;
+    setText("lastWakeOut", lastW ? new Date(lastW*1000).toLocaleString() : "—");
+    setText("nextWakeOut", nextW ? new Date(nextW*1000).toLocaleString() : "—");
 
     // Carrier & signal
     const raw = String(c.result || "");
@@ -150,6 +162,7 @@ async function readAll() {
     const sig = Number(s.result);
     setText("sigOut", isFinite(sig) ? `${sig}%` : String(s.result));
 
+    setAwakeBadge();
     setText("varMsg", "");
   } catch (e) {
     console.error(e);
@@ -159,12 +172,14 @@ async function readAll() {
 function startAutoReads() {
   if (autoTimer) clearInterval(autoTimer);
   autoTimer = setInterval(() => {
-    if (Date.now() - lastEventTs > 15000) readAll(); // fallback if no events in 15s
+    // Fallback polling if no events in 20s
+    if (Date.now() - lastEventTs > 20000) readAll();
+    setAwakeBadge();
   }, 60000); // check once per minute
   readAll(); // initial
 }
 
-// ---- Functions (LED) ----
+// ---- Functions (LED + clrlog) ----
 async function onLedClick(ev) {
   const arg = ev.currentTarget?.dataset?.arg;
   if (!auth || !currentDeviceId || !arg) { setText("funcMsg", "LED call missing info."); return; }
@@ -175,7 +190,17 @@ async function onLedClick(ev) {
     setTimeout(() => setText("funcMsg",""), 1200);
   } catch (e) {
     console.error(e);
-    setText("funcMsg", `Call failed: ${e.message || e}`);
+    setText("funcMsg", `Call failed (device sleeping?): ${e.message || e}`);
+  }
+}
+async function onClearLog() {
+  if (!auth || !currentDeviceId) return;
+  try {
+    const res = await callFunction(currentDeviceId, "clrlog", "", auth);
+    setText("funcMsg", `clrlog ok (${res.return_value})`);
+    setTimeout(() => setText("funcMsg",""), 1500);
+  } catch (e) {
+    setText("funcMsg", `clrlog failed (sleeping?): ${e.message || e}`);
   }
 }
 
@@ -213,7 +238,7 @@ async function startEventStream() {
     (function pump() {
       reader.read().then(({ done, value }) => {
         if (done) {
-          setText("evtMsg", "Event stream ended (device offline or network change).");
+          setText("evtMsg", "Event stream ended (device asleep/offline or network change).");
           scheduleEvtReconnect();
           return;
         }
@@ -237,13 +262,18 @@ async function startEventStream() {
     scheduleEvtReconnect();
   }
 }
-
 function handleEventData(data) {
   try {
     const j = JSON.parse(data);
+
     if (typeof j.battPct === "number") setText("battPctOut", `${j.battPct.toFixed(1)} %`);
     if (typeof j.battV   === "number") setText("battVOut",   `${j.battV.toFixed(3)} V`);
     if (j.battStateStr) setText("battStateOut", prettify(j.battStateStr));
+    if (typeof j.onBatterySec === "number") setText("onBattOut", toHMS(j.onBatterySec));
+
+    if (j.lastWake) setText("lastWakeOut", new Date(j.lastWake*1000).toLocaleString());
+    if (j.nextWake) { setText("nextWakeOut", new Date(j.nextWake*1000).toLocaleString()); latestNextWake = j.nextWake; }
+
     if (typeof j.sigPct === "number") setText("sigOut", `${j.sigPct}%`);
     if (j.carrier) {
       const cleaned = String(j.carrier).replace(/[^\x20-\x7E]/g, "");
@@ -255,54 +285,34 @@ function handleEventData(data) {
     appendLog(`[${new Date().toLocaleTimeString()}] ${data}`);
   }
   lastEventTs = Date.now();
+  setAwakeBadge();
 }
-
 function scheduleEvtReconnect() {
   stopEventStream();
   setTimeout(startEventStream, backoffMs);
   backoffMs = Math.min(backoffMs * 2, backoffMax);
 }
 
-// Pause SSE when tab hidden to save data
+// Pause SSE when tab hidden to save network
 document.addEventListener("visibilitychange", () => {
   if (document.hidden) stopEventStream();
   else startEventStream();
 });
 
-// ---- Helpers ----
+// ---- UI helpers ----
 function prettify(s) {
   return String(s).replace(/_/g, " ").replace(/\b\w/g, c => c.toUpperCase());
 }
-function battStatePretty(n) {
-  // Fallback map if we only have the numeric variable
-  const m = {
-    0: "Unknown",
-    1: "Not Charging",
-    2: "Charging",
-    3: "Charged",
-    4: "Discharging",
-    5: "Fault",
-    6: "Disconnected"
-  };
-  return m[n] || "Unknown";
+function toHMS(sec) {
+  sec = Math.max(0, Math.floor(Number(sec)||0));
+  const h = Math.floor(sec/3600);
+  const m = Math.floor((sec%3600)/60);
+  const s = sec%60;
+  if (h) return `${h}h ${m}m`;
+  if (m) return `${m}m ${s}s`;
+  return `${s}s`;
 }
-
-// ---- Bootstrap ----
-function bootstrap(tok) {
-  auth = tok;
-  refreshDevices();
-}
-
-document.addEventListener("DOMContentLoaded", () => {
-  $("saveToken").addEventListener("click", saveToken);
-  $("clearToken").addEventListener("click", clearToken);
-  $("refreshDevices").addEventListener("click", refreshDevices);
-  $("refreshNow").addEventListener("click", readAll);
-  document.querySelectorAll(".ledBtn").forEach(btn => {
-    btn.addEventListener("click", onLedClick);
-  });
-
-  const tokHash = loadTokenFromHash();
-  const tok = tokHash || loadToken();
-  if (tok) bootstrap(tok);
-});
+function setAwakeBadge() {
+  const badge = $("awakeBadge");
+  // If we received an event in the last 10s, likely awake.
+  const recentEvent = (Date.now() - lastEventTs) < 100
