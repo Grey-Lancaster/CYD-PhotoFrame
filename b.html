@@ -8,7 +8,7 @@
     body { font-family: system-ui, Arial, sans-serif; margin: 24px; }
     fieldset { border: 1px solid #ddd; border-radius: 10px; padding: 16px; margin-bottom: 16px; }
     legend { padding: 0 6px; color: #444; }
-    label { display: inline-block; min-width: 120px; }
+    label { display: inline-block; min-width: 140px; }
     input, select, button { padding: 8px; margin: 6px 0; }
     code { background:#f6f8fa; padding:2px 6px; border-radius:4px; }
     .row { display:flex; gap:12px; flex-wrap: wrap; align-items: center; }
@@ -50,13 +50,15 @@
   </fieldset>
 
   <fieldset>
-    <legend>Variables</legend>
-    <div class="row"><label>tempF</label> <strong id="tempOut">—</strong></div>
+    <legend>Battery & Radio</legend>
+    <div class="row"><label>Battery %</label> <strong id="battPctOut">—</strong></div>
+    <div class="row"><label>Battery Voltage</label> <strong id="battVOut">—</strong></div>
+    <div class="row"><label>Battery State</label> <strong id="battStateOut">—</strong></div>
     <div class="row"><label>Carrier</label> <strong id="carrierOut">—</strong></div>
     <div class="row"><label>Signal</label> <strong id="sigOut">—</strong> <span class="muted">(0–100%)</span></div>
     <div class="row">
       <button id="refreshNow">Refresh now</button>
-      <span class="muted">Auto: event-driven. Falls back to polling if no events.</span>
+      <span class="muted">Auto: event-driven; polls only if no events.</span>
     </div>
     <div id="varMsg" class="error"></div>
   </fieldset>
@@ -77,6 +79,6 @@
     <div id="evtMsg" class="error"></div>
   </fieldset>
 
-  <div class="muted">Build: v3 (event-driven, low-data)</div>
+  <div class="muted">Build: v4 (battery gauge + low data)</div>
 </body>
 </html>
