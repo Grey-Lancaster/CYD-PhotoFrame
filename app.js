@@ -1,3 +1,6 @@
+// app.js — Always-online dashboard for Boron 404X (no sleep)
+// Shows "—" for On Battery when not discharging
+
 // ---- Config ----
 const API = "https://api.particle.io/v1";
 const TOKEN_KEY = "particle_token";
@@ -45,8 +48,13 @@ async function getVariable(id, name, t) { return apiGetJson(`${API}/devices/${id
 async function callFunction(id, name, arg, t) { return apiPostForm(`${API}/devices/${id}/${name}`, t, { arg }); }
 
 // ---- State ----
-let auth=null, currentDeviceId=null, autoTimer=null, evtAbort=null, lastEventTs=0, backoffMs=1500;
-const backoffMax=30000;
+let auth = null;
+let currentDeviceId = null;
+let autoTimer = null;
+let evtAbort = null;
+let lastEventTs = 0;
+let backoffMs = 1500;
+const backoffMax = 30000;
 
 // ---- Devices ----
 async function refreshDevices() {
@@ -93,8 +101,13 @@ async function readAll() {
     const pct = Number(bp.result); setText("battPctOut", isFinite(pct)?`${pct.toFixed(1)} %`:String(bp.result));
     const v   = Number(bv.result); setText("battVOut", isFinite(v)?`${v.toFixed(3)} V`:String(bv.result));
     setText("battStateOut", prettify(String(bs.result||"unknown")));
-    const obSec = Number(ob.result)||0; setText("onBattOut", toHMS(obSec));
-    const raw = String(c.result||""); const cleaned = raw.replace(/[^\x20-\x7E]/g,""); setText("carrierOut", PLMN[cleaned] || cleaned || "unknown");
+
+    const obSec = Number(ob.result) || 0;
+    setText("onBattOut", obSec > 0 ? toHMS(obSec) : "—");
+
+    const raw = String(c.result||""); const cleaned = raw.replace(/[^\x20-\x7E]/g,"");
+    setText("carrierOut", PLMN[cleaned] || cleaned || "unknown");
+
     const sig = Number(s.result); setText("sigOut", isFinite(sig)?`${sig}%`:String(s.result));
     setText("varMsg","");
   } catch(e){ console.error(e); setText("varMsg", `Read failed: ${e.message||e}`); }
@@ -150,7 +163,11 @@ function handleEventData(data){
     if(typeof j.battPct==="number") setText("battPctOut", `${j.battPct.toFixed(1)} %`);
     if(typeof j.battV==="number")   setText("battVOut",   `${j.battV.toFixed(3)} V`);
     if(j.battStateStr) setText("battStateOut", prettify(j.battStateStr));
-    if(typeof j.onBatterySec==="number") setText("onBattOut", toHMS(j.onBatterySec));
+
+    if(typeof j.onBatterySec==="number") {
+      setText("onBattOut", j.onBatterySec > 0 ? toHMS(j.onBatterySec) : "—");
+    }
+
     if(typeof j.sigPct==="number") setText("sigOut", `${j.sigPct}%`);
     if(j.carrier){ const cleaned=String(j.carrier).replace(/[^\x20-\x7E]/g,""); setText("carrierOut", PLMN[cleaned]||cleaned||"unknown"); }
     if(j.led) $("ledState").innerText = `LED: ${String(j.led).toUpperCase()}`;
