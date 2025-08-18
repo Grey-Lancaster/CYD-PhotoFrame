@@ -1,5 +1,5 @@
 // === Configuration ===
-// Hard-code your secure Particle token and device name/ID.
+// Hard-code your secure Particle token and device name/ID .
 // NOTE: If you publish this publicly (e.g., GitHub Pages), rotate your token as needed.
 const TOKEN  = 'c5faa926e596e02388dc06e8cfc333dbac4d785f'; // your token
 const DEVICE = 'Grey_Fox_1';                                 // name or deviceID
