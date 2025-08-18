@@ -1,98 +1,133 @@
 <!doctype html>
-<html>
+<html lang="en">
 <head>
   <meta charset="utf-8" />
-  <title>Boron 404X Dashboard (Always Online)</title>
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Boron 404X Dashboard</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
   <style>
-    :root { color-scheme: light dark; }
-    body { font-family: system-ui, Arial, sans-serif; margin: 24px; }
-    fieldset { border: 1px solid #ddd; border-radius: 12px; padding: 16px; margin-bottom: 16px; }
-    legend { padding: 0 8px; color: #444; }
-    label { display: inline-block; min-width: 160px; }
-    input, select, button { padding: 8px; margin: 6px 0; }
-    code { background:#f6f8fa; padding:2px 6px; border-radius:6px; }
-    .row { display:flex; gap:12px; flex-wrap: wrap; align-items: center; }
-    #log { height: 240px; overflow:auto; background:#0b1020; color:#d6e2ff; padding:10px; border-radius:8px; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 12px; }
-    .muted { color:#666; }
-    .error { color:#b00020; font-weight:600; }
-    .ok { color:#1b5e20; }
-    .pill { display:inline-block; padding:2px 10px; border-radius:999px; border:1px solid #bbb; }
-    .badge { padding:2px 8px; border-radius:999px; border:1px solid #bbb; }
+    :root { --bg:#0f172a; --card:#111827; --text:#e5e7eb; --muted:#94a3b8; --accent:#22d3ee; }
+    *{ box-sizing:border-box; }
+    body{
+      margin:0; font-family: system-ui, -apple-system, Segoe UI, Roboto, Inter, Arial, sans-serif;
+      background:linear-gradient(180deg,#0b1220,#0f172a); color:var(--text);
+    }
+    header{ padding:16px 20px; display:flex; align-items:center; gap:12px; border-bottom:1px solid #1f2937; }
+    header h1{ font-size:18px; margin:0; letter-spacing:.3px; }
+    .tag{ font-size:12px; color:#0f172a; background:var(--accent); padding:2px 8px; border-radius:999px; font-weight:600; }
+
+    main{ max-width:980px; margin:24px auto; padding:0 16px 40px; display:grid; gap:16px; }
+    .row{ display:grid; gap:16px; grid-template-columns: 1fr; }
+    @media (min-width:900px){ .row{ grid-template-columns: 1.4fr .6fr; } }
+
+    .card{
+      background:var(--card); border:1px solid #1f2937; border-radius:14px; padding:16px;
+      box-shadow: 0 10px 30px rgba(0,0,0,.25), inset 0 1px 0 rgba(255,255,255,.04);
+    }
+    .card h2{ margin:0 0 10px; font-size:16px; color:#cbd5e1; font-weight:700; }
+    .grid{ display:grid; gap:8px; grid-template-columns: repeat(2, minmax(0,1fr)); }
+    .stat{ background:#0b1220; border:1px solid #1f2937; border-radius:10px; padding:10px 12px; }
+    .label{ font-size:12px; color:var(--muted); }
+    .value{ font-size:18px; font-weight:700; }
+    .mono{ font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
+    .btnbar{ display:flex; flex-wrap:wrap; gap:8px; margin-top:10px; }
+    button{
+      background:#0b1220; color:#e5e7eb; border:1px solid #1f2937; padding:10px 14px; border-radius:10px; font-weight:600; cursor:pointer;
+    }
+    button:hover{ border-color:#334155; }
+    button.primary{ background:#06b6d4; color:#0b1220; border-color:#06b6d4; }
+    button.warn{ background:#1b1f2a; border-color:#ef4444; color:#fecaca; }
+    .small{ font-size:12px; color:#94a3b8; }
+    .ok{ color:#22d3ee; }
+    .err{ color:#fca5a5; }
+    .rowline{ margin-top:8px; border-top:1px dashed #1f2937; padding-top:8px; }
+    .muted{ color:#94a3b8; }
+    .hidden{ display:none; }
+    .kbd{ font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; background:#111827; border:1px solid #1f2937; padding:2px 6px; border-radius:6px; }
+    footer{ text-align:center; color:#64748b; font-size:12px; padding:24px 0 36px; }
+    a{ color:#67e8f9; text-decoration:none; }
+    a:hover{ text-decoration:underline; }
   </style>
-  <script src="app.js?v=8" defer></script>
 </head>
 <body>
-  <h1>🟦 Boron 404X Dashboard</h1>
-  <div class="muted">Always-online mode. Your token is stored only in this browser.</div>
+  <header>
+    <span class="tag">Boron 404X</span>
+    <h1>Grey_Fox_1 — Live Panel</h1>
+    <span class="small">manual refresh to limit data</span>
+  </header>
 
-  <fieldset>
-    <legend>Auth</legend>
-    <div class="row">
-      <label>Access Token</label>
-      <input id="token" type="password" size="54" placeholder="Paste a Particle access token" />
-      <button id="saveToken">Save</button>
-      <button id="clearToken" title="Remove token from this browser">Clear</button>
-    </div>
-    <div class="muted">
-      Tip: create a short-lived token with <code>particle token create</code>.
-      You can also open this page as <code>#token=YOUR_TOKEN</code> to auto-fill.
-    </div>
-    <div id="authMsg" class="error"></div>
-  </fieldset>
+  <main>
+    <section class="row">
+      <div class="card">
+        <h2>Status</h2>
+        <div class="grid">
+          <div class="stat">
+            <div class="label">Battery %</div>
+            <div class="value"><span id="battPct">—</span>%</div>
+          </div>
+          <div class="stat">
+            <div class="label">Battery V</div>
+            <div class="value"><span id="battV">—</span> V</div>
+          </div>
+          <div class="stat">
+            <div class="label">State</div>
+            <div class="value"><span id="battStateStr">—</span></div>
+          </div>
+          <div class="stat">
+            <div class="label">On Battery (this session)</div>
+            <div class="value"><span id="onBattery">—</span></div>
+          </div>
+          <div class="stat">
+            <div class="label">Signal</div>
+            <div class="value"><span id="sigPct">—</span>%</div>
+          </div>
+          <div class="stat">
+            <div class="label">Carrier</div>
+            <div class="value"><span id="carrier">—</span></div>
+          </div>
+          <div class="stat">
+            <div class="label">Log entries (EEPROM)</div>
+            <div class="value"><span id="logCount">—</span></div>
+          </div>
+          <div class="stat">
+            <div class="label">On-battery history window</div>
+            <div class="value"><span id="histWindow">—</span></div>
+          </div>
+        </div>
 
-  <fieldset>
-    <legend>Device</legend>
-    <div class="row">
-      <label>Choose device</label>
-      <select id="deviceSelect"></select>
-      <button id="refreshDevices">Refresh devices</button>
-    </div>
-    <div>
-      Selected: <code id="selectedId">—</code>
-      &nbsp; <span id="onlineBadge" class="badge muted">offline?</span>
-    </div>
-  </fieldset>
+        <div class="btnbar rowline">
+          <button class="primary" id="refreshBtn">Refresh</button>
+          <button id="ledOnBtn">LED ON</button>
+          <button id="ledOffBtn">LED OFF</button>
+          <button class="warn" id="clrLogBtn" title="Clear EEPROM ring log">Clear Log</button>
+          <button id="dlBtn" title="Download CSV of EEPROM log">Download CSV</button>
+        </div>
+        <div class="rowline small muted">
+          <span id="msg" class="ok"></span>
+        </div>
+      </div>
 
-  <fieldset>
-    <legend>Battery & Radio</legend>
-    <div class="row"><label>Battery %</label>     <strong id="battPctOut">—</strong></div>
-    <div class="row"><label>Battery Voltage</label><strong id="battVOut">—</strong></div>
-    <div class="row"><label>Battery State</label>  <strong id="battStateOut">—</strong></div>
-    <div class="row"><label>On Battery</label>     <strong id="onBattOut">—</strong></div>
-    <div class="row"><label>Carrier</label>        <strong id="carrierOut">—</strong></div>
-    <div class="row"><label>Signal</label>         <strong id="sigOut">—</strong> <span class="muted">(0–100%)</span></div>
-    <div class="row">
-      <button id="refreshNow">Refresh now</button>
-      <span class="muted">Event-driven; polls every 60s if no events.</span>
-    </div>
-    <div id="varMsg" class="error"></div>
-  </fieldset>
-
-  <fieldset>
-    <legend>Control & Tools</legend>
-    <div class="row">
-      <button data-arg="on"  class="ledBtn">Call <code>led("on")</code></button>
-      <button data-arg="off" class="ledBtn">Call <code>led("off")</code></button>
-      <span id="funcMsg" class="ok"></span>
-      <span id="ledState" class="pill">LED: ?</span>
-    </div>
-    <div class="row">
-      <button id="clearLogBtn" title="Clear EEPROM ring log on device">Call <code>clrlog()</code></button>
-    </div>
-  </fieldset>
-
-  <fieldset>
-    <legend>Live events (<code>status</code>)</legend>
-    <div id="log"></div>
-    <div id="evtMsg" class="error"></div>
-  </fieldset>
-
-  <div class="muted">Build: v8 (always-online, low data)</div>
-  Contact
+      <div class="card">
+        <h2>Settings</h2>
+        <div class="small">
+          <div>Device: <span class="mono" id="devName">Grey_Fox_1</span></div>
+          <div>API Base: <span class="mono">api.particle.io/v1</span></div>
+          <div>CSV download uses <span class="kbd">exportlog</span> + live event stream.</div>
+          <div class="rowline">
+            <div>Tip: To change token/device, edit <span class="mono">app.js</span> constants.</div>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+  Contact:
   <br>
   grey Lancaster
   <br>
   grey@smallbizserver.com
+  <footer>
+    <span>© Your project • <a href="https://console.particle.io" target="_blank">Particle Console</a></span>
+  </footer>
+
+  <script src="app.js"></script>
 </body>
 </html>
