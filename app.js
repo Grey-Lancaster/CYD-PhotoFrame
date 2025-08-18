@@ -58,7 +58,7 @@ async function refreshAll(){
   $('#devName').textContent = DEVICE;
   msg('Refreshing …');
 
-  // Read each variable individually so one failure doesn’t kill the whole batch
+  // read one-by-one so one failure doesn't block others
   const battPct      = await readVar('battPct');
   const battV        = await readVar('battV');
   const battStateStr = await readVar('battStateStr');
@@ -67,7 +67,11 @@ async function refreshAll(){
   const carrier      = await readVar('carrier');
   const logCount     = await readVar('logCount');
 
-  // Update UI (leave “—” if null)
+  // NEW estimator vars
+  const pctPerHour   = await readVar('pctPerHour'); // negative when draining
+  const mAhPerHour   = await readVar('mAhPerHour'); // positive
+  const hoursLeft    = await readVar('hoursLeft');  // hours
+
   if (battPct!=null)      $('#battPct').textContent      = Number.isFinite(battPct)? battPct.toFixed(1): battPct;
   if (battV!=null)        $('#battV').textContent        = Number.isFinite(battV)?   battV.toFixed(3): battV;
   if (battStateStr!=null) $('#battStateStr').textContent = battStateStr;
@@ -82,10 +86,19 @@ async function refreshAll(){
     $('#histWindow').textContent = `≈ ${mins} min (${hours} h) on-battery history`;
   }
 
-  // If anything critical failed, surface a small notice
+  // Show estimator only when meaningful
+  if (pctPerHour!=null && Number.isFinite(pctPerHour)) {
+    const txt = `${(-pctPerHour).toFixed(2)} %/h` + (Number.isFinite(mAhPerHour) ? `  (~${mAhPerHour.toFixed(0)} mAh/h)` : '');
+    $('#drainRate').textContent = txt;
+  }
+  if (hoursLeft!=null && Number.isFinite(hoursLeft)) {
+    $('#hoursLeft').textContent = `${hoursLeft.toFixed(1)} h`;
+  }
+
   const bad = [battPct,battV,battStateStr,onBatterySec,sigPct,carrier].some(v=>v==null);
   msg(bad ? 'Some fields failed (see console).' : 'OK', bad?'err':'ok');
 }
+
 
 async function led(on){
   try{
