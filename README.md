@@ -1,123 +1,87 @@
-# PhotoFrame
+# CYD PhotoFrame
 
-A feature-rich photo frame project powered by the ESP32 microcontroller with a built-in 320x240 TFT display. Ideal for showcasing slideshows, playing audio, and more.
+A photo frame for the ESP32 **"Cheap Yellow Display" (CYD)** — a ~$15 board with a 320×240 touch screen, SD card slot and speaker. Photos live on the SD card, and you manage everything from your phone or PC through a built-in web page.
 
----
+## Install
 
-## 🚀 Easiest Way to Install
-
-The quickest way to get PhotoFrame running is to use the **Web Installer** here:  
+**Easiest:** use the browser-based installer — no tools needed:
 [**➡ CYD-PhotoFrame Web Installer**](https://grey-lancaster.github.io/CYD-PhotoFrame/)
 
-This method lets you flash the firmware directly from your browser — no additional tools required.  
-If you prefer, you can follow the **PlatformIO instructions below** to build and upload from source.
+**From source:** install [PlatformIO](https://platformio.org/) and run one of
 
----
+```
+pio run -e cyd -t upload          # standard CYD (ILI9341)
+pio run -e cyd2usb -t upload      # CYD with 2 USB ports (ST7789)
+pio run -e cyd2b -t upload        # CYD "2B" variant (inverted colours)
+pio run -e cyd -t uploadfs        # splash image + favicon (data/ folder), once
+```
 
-## Features
+## First start
 
-- **TFT Display**: Displays photos and other instructions on a 320x240 resolution.
-- **Audio Playback**: Supports `.wav` and `.mp3` files, played from an SD card.
-- **Slideshow**: Automatically cycles through images stored on the SD card.
-- **WiFi Configuration**: Easily connect to WiFi using a built-in WiFiManager interface.
-- ~~**OTA Updates**: Update the firmware wirelessly using ElegantOTA.~~ (not yet implemented)
-- **Web Interface**: Upload and manage photos directly through the web.
-- **Customizable Interface**: Use QR codes and vanity screens to guide and inform users.
-- **Compact Design**: Built for the "Cheap Yellow Display" (CYD) board, a cost-effective solution under $20.
+1. Put a FAT32 SD card with a few `.jpg` photos in the slot (or add them later from the web page).
+2. Power the frame. It shows the splash screen, then tries your saved WiFi.
+3. First time only: connect your phone/PC to the WiFi network **`ESP32_AP`**, open **192.168.4.1** and choose your network.
+4. The screen shows the frame's address and a QR code. Open it in a browser (or use **http://photoframe.local**).
 
----
+The frame keeps working without WiFi (it just shows the slideshow) and reconnects by itself when the network is back.
+To pick a different WiFi network later, **hold the BOOT button while powering on**.
 
-## Board Description
+## Touch and buttons
 
-This project is designed for the **Cheap Yellow Display (CYD)** ESP32 board, featuring:
-- 320x240 TFT display
-- SD card support
-- Speaker output
-- GPIO pins
+| Action | Result |
+| --- | --- |
+| Touch left third | Previous photo |
+| Touch right third (or BOOT button) | Next photo |
+| Touch middle | Show IP address + QR code |
 
-You can purchase this board on:
-- [Amazon](https://amzn.to/3UVQwrV) (under $20) *(right-click to open in a new tab)*
-- [AliExpress](#) (under $13, 2-week shipping)
+If left and right feel reversed on your board, uncomment `TOUCH_FLIP_X` in `1-Slideshow/app.h`.
 
----
+## Web interface
 
-## Setup Instructions (PlatformIO Method)
+- **Live preview** of what is on the frame, with prev / next / pause.
+- **Upload** photos by drag-and-drop (several at once). Photos are **resized in your browser** to fit the screen before they are sent, so you don't need to prepare them. Crop-to-fill or letterbox, your choice.
+- **Delete** photos, with thumbnails.
+- **Settings** (saved on the frame): seconds per photo, shuffle, screen brightness, sound volume, and *night mode* (turn the screen off between two hours; needs WiFi once for the clock).
+- **Sound**: upload `music.wav` or `music.mp3` and it plays (through the speaker) whenever you upload a photo, or on demand.
+- **Firmware update** at `/update` (ElegantOTA). Upload the `firmware.bin` from a release or from a CI build.
 
-1. **Prepare the Filesystem**:
-   - Create a `data` folder in your project directory.
-   - Add a 320x240 JPEG file named `vanity.jpg` to this folder.
-   - Use PlatformIO's "Build Filesystem Image" and "Upload Filesystem Image" to upload the file to SPIFFS.
+There is no password on the web interface — keep the frame on a network you trust.
 
-2. **Upload the Code**:
-   - Use PlatformIO to upload the firmware to your CYD board.
-   - Alternatively, download the precompiled `.bin` file from the [Releases](#) section and flash it using the ESP32 Flash Download Tool.
+## Photos
 
-3. **WiFi Configuration**:
-   - If the board is not connected to WiFi, follow these steps:
-     - Connect to the ESP32 AP (`ESP32_AP`).
-     - Open your browser and go to `192.168.4.1` to configure WiFi.
+- Any size is fine; photos larger than the screen are scaled down (1/2, 1/4 or 1/8) as they are drawn. Smaller ones are centered.
+- **Baseline JPEGs only.** Progressive JPEGs can't be decoded and are skipped. The browser upload always produces baseline JPEGs.
+- Only files in the SD card's top-level folder are used (`.jpg` / `.jpeg`, any case).
 
-4. **Start the Frame**:
-   - Once connected, the frame will:
-     - Display your `vanity.jpg`.
-     - Begin the slideshow from the SD card.
-     - Play audio files as uploaded.
+## Hardware
 
----
+Designed for the CYD ESP32-2432S028 family: ILI9341 (or ST7789) 320×240 display, XPT2046 touch, SD slot, speaker on GPIO26, backlight on GPIO21.
 
-## Web Interface
+## Troubleshooting
 
-Access the web interface at `<device-IP>` (e.g., `192.168.1.x`) to:
-- Upload images and audio files
-- Adjust slideshow speed
-- Trigger audio playback
-- Check device status
+- **"No SD card"** — re-seat the card; the frame retries every few seconds. FAT32 only.
+- **"Cannot show photos"** — all photos failed to decode (progressive/corrupt JPEG). Re-upload them through the web page.
+- **Build fails with a framework error** — the project is pinned to `espressif32@6.10.0` (Arduino-ESP32 2.x). Newer platform releases use Arduino-ESP32 3.x, which this code doesn't support.
 
----
+## Development
 
-## Preparing Images and Audio
+`platformio.ini` pins the platform and all libraries. The code lives in `1-Slideshow/`:
 
-1. **Images**:
-   - Resize all images to `320x240` pixels.
-   - Save them as `.jpg` files for better performance.
+| File | Purpose |
+| --- | --- |
+| `1-Slideshow.cpp` | setup / loop, touch, night mode, WiFi |
+| `storage.cpp` | SD card, photo list & playlist, uploads, deletes (one mutex guards all SD access) |
+| `display.cpp` | backlight, status screens, JPEG decode |
+| `audio.cpp` | WAV / MP3 playback |
+| `web.cpp`, `web_assets.h` | web server, JSON API, the single-page UI |
+| `settings.cpp` | settings saved in flash |
 
-2. **Audio**:
-   - Use [Audacity](https://www.audacityteam.org/) to convert audio to `.wav` format for playback.
+GitHub Actions builds all three boards on every push and keeps the `.bin` files as artifacts.
 
----
+## Credits
 
-## Advanced Features
-
-- **mDNS**: Access your device via `photoframe.local` without needing the IP address.
-- **OTA Updates~~**: Update firmware using ElegantOTA by navigating to `/update` on the web interface.
-- **Customization**: Modify the vanity screen (`vanity.jpg`) for personalized branding.
-
----
-
-## Project Files and Notes
-
-- **README**: Basic instructions.
-- **Wiki**: Detailed guides, including:
-  - Using the `.bin` file
-  - Uploading files to SPIFFS
-  - Preparing audio and images
-  - Creating a 3D printed case
-- **.bin File**: Precompiled firmware for easy flashing.
-
----
-
-## Contributions
-
-Feel free to contribute! Fork the repo, make changes, and submit a pull request. Ideas and bug reports are also welcome.
-
----
+Created by **Grey Lancaster** with help from ChatGPT, Claude and the open-source community. Built on WiFiManager, ESPAsyncWebServer, TFT_eSPI, XPT2046_Bitbang, SdFat, JPEGDEC, QRCode, ESP8266Audio and ElegantOTA — thank you to their authors.
 
 ## License
 
-This project is licensed under the [MIT License](LICENSE).
-
----
-
-## About
-
-Developed by **Grey Lancaster**. Thanks to the open-source community for inspiration and support.
+[MIT](LICENSE)
