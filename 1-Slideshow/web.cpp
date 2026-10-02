@@ -62,7 +62,10 @@ static String statusJson() {
   struct tm ti;
   if (getLocalTime(&ti, 0)) {
     char buf[32];
-    strftime(buf, sizeof(buf), "%a %H:%M", &ti);
+    char day[8];
+    strftime(day, sizeof(day), "%a", &ti);
+    int h12 = ti.tm_hour % 12 == 0 ? 12 : ti.tm_hour % 12;
+    snprintf(buf, sizeof(buf), "%s %d:%02d %s", day, h12, ti.tm_min, ti.tm_hour < 12 ? "AM" : "PM");
     time = buf;
   }
   String out = "{\"v\":\"" FW_VERSION "\",\"host\":\"" HOSTNAME "\",\"ip\":" + jsonString(g_ip);

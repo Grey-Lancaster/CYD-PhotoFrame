@@ -139,7 +139,7 @@ async function j(u,o){const r=await fetch(u,o);const t=await r.text();let d;try{
 const post=(u,d)=>j(u,{method:'POST',body:d instanceof URLSearchParams?d:new URLSearchParams(d||{})});
 const cmd=(c,n)=>post('/api/cmd',n?{c,n}:{c}).then(loadStatus).catch(e=>toast(e.message));
 
-for(let h=0;h<24;h++){const o=h+':00';$('#nstart').add(new Option(o,h));$('#nend').add(new Option(o,h))}
+for(let h=0;h<24;h++){const o=(h%12||12)+(h<12?' AM':' PM')+(h==0?' (midnight)':h==12?' (noon)':'');$('#nstart').add(new Option(o,h));$('#nend').add(new Option(o,h))}
 
 function fmtUp(s){const d=Math.floor(s/86400),h=Math.floor(s%86400/3600),m=Math.floor(s%3600/60);return (d?d+'d ':'')+h+'h '+m+'m'}
 
