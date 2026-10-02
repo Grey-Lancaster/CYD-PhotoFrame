@@ -86,6 +86,10 @@ jobs:
               `esptool.py --chip esp32 write_flash 0x0 CYD-PhotoFrame-cyd-factory.bin`.
             - **`*-update.bin`**: firmware only, for an already running frame (`http://photoframe.local/update`).
 
+            The factory image replaces everything on the board, so it also **erases the saved WiFi
+            login and settings** (you will see the `ESP32_AP` setup screen again). Use the update
+            file to keep them. Photos on the SD card are never touched.
+
             ## What's new in 4.0
 
             Complete rework: SD card access is thread-safe, uploads/deletes are reliable,
