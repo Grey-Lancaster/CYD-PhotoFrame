@@ -2,7 +2,12 @@ name: Build
 
 on:
   push:
+    branches: ["**"]
+    tags: ["v*"]
   pull_request:
+
+permissions:
+  contents: write   # tag pushes create a GitHub Release
 
 jobs:
   build:
@@ -20,12 +25,70 @@ jobs:
         with:
           path: ~/.platformio
           key: pio-${{ hashFiles('platformio.ini') }}
-      - run: pip install platformio
-      - run: pio run -e ${{ matrix.env }}
+      - run: pip install platformio esptool==4.8.1
+
+      - name: Build firmware
+        run: pio run -e ${{ matrix.env }}
+
+      - name: Build merged flash image
+        run: |
+          B=.pio/build/${{ matrix.env }}
+          mkdir -p parts dist
+          cp $B/firmware.bin $B/bootloader.bin $B/partitions.bin parts/
+          pio run -e ${{ matrix.env }} -t buildfs      # this wipes $B/*.bin, so parts/ was copied first
+          cp $B/spiffs.bin parts/
+          BOOT=$(find ~/.platformio/packages/framework-arduinoespressif32 -name boot_app0.bin | head -1)
+          # Offsets match min_spiffs.csv. The merged file is flashed at offset 0
+          # (web installer / esptool); the update file is for the /update page.
+          esptool.py --chip esp32 merge_bin \
+            -o dist/CYD-PhotoFrame-${{ matrix.env }}-factory.bin \
+            --flash_mode dio --flash_freq 40m --flash_size 4MB \
+            0x1000 parts/bootloader.bin 0x8000 parts/partitions.bin 0xe000 "$BOOT" \
+            0x10000 parts/firmware.bin 0x3D0000 parts/spiffs.bin
+          cp parts/firmware.bin dist/CYD-PhotoFrame-${{ matrix.env }}-update.bin
+          ls -l dist
+
       - uses: actions/upload-artifact@v4
         with:
           name: firmware-${{ matrix.env }}
-          path: |
-            .pio/build/${{ matrix.env }}/firmware.bin
-            .pio/build/${{ matrix.env }}/bootloader.bin
-            .pio/build/${{ matrix.env }}/partitions.bin
+          path: dist/*
+
+  release:
+    if: startsWith(github.ref, 'refs/tags/v')
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          path: dist
+          merge-multiple: true
+      - run: ls -l dist
+      - uses: softprops/action-gh-release@v2
+        with:
+          name: CYD PhotoFrame ${{ github.ref_name }}
+          files: dist/*
+          body: |
+            ## Which file do I need?
+
+            Your board's panel decides the build. In a serial monitor the frame prints a
+            `Display ID:` line at boot (`0x9341` = ILI9341, `0x8552` = ST7789).
+
+            | Build | Panel | Boards |
+            | --- | --- | --- |
+            | `cyd` | ILI9341, normal colours | Most CYDs, including many "2 USB" boards |
+            | `cyd2b` | ILI9341, inverted colours | "2B" variant |
+            | `cyd2usb` | ST7789 | ST7789 "2 USB" boards |
+
+            Wrong build = white screen or a negative picture; just flash another one.
+
+            - **`*-factory.bin`**: complete image (bootloader, partitions, firmware, splash image).
+              Flash at offset **0** with the web installer, or
+              `esptool.py --chip esp32 write_flash 0x0 CYD-PhotoFrame-cyd-factory.bin`.
+            - **`*-update.bin`**: firmware only, for an already running frame (`http://photoframe.local/update`).
+
+            ## What's new in 4.0
+
+            Complete rework: SD card access is thread-safe, uploads/deletes are reliable,
+            new single-page web interface (drag-and-drop upload with in-browser resize,
+            thumbnails, settings), touch controls, night mode, MP3 support, large photos
+            scaled to fit, works without WiFi. See the README.
