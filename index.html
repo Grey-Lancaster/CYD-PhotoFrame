@@ -10,39 +10,42 @@
 
 <body>
 
-  <h1>Flash Your CYD PhotoFrame Firmware to 3.0!</h1>
+  <h1>Flash Your CYD PhotoFrame Firmware to 4.0!</h1>
   <p><strong>A guide to flashing ESP32 firmware for the CYD PhotoFrame.</strong> This ESP32 project features a slideshow viewer and built-in WiFi setup, perfect for showcasing your images using the Cheap Yellow Display (CYD) board.</p>
   <p>Code for this project: <a href="https://github.com/Grey-Lancaster/CYD-PhotoFrame" target="_blank">GitHub Repository</a>.</p>
   <p>After uploading the firmware, the LCD screen should guide you through WiFi setup. For full setup instructions, visit the <a href="https://github.com/Grey-Lancaster/CYD-PhotoFrame/wiki/setup-instructions" target="_blank">Wiki Setup Page</a>.</p>
   <p>If you do not see the COM port, you may need to install the CH340 drivers. See the instructions below.</p>
-  <p>Click one of the buttons below to flash the latest firmware to your ESP32 device.</p>
+  <p>Click one of the buttons below to flash the latest firmware (<strong>version 4.0</strong>) to your ESP32 device.</p>
+  <p><strong>Which button?</strong> It depends on the display panel in your board, not on the number of USB ports. If you pick the wrong one the screen stays <em>white</em> or the picture looks like a <em>negative</em> &mdash; nothing is damaged, just flash another button. Start with the first one.</p>
+  <p><strong>Note:</strong> installing from this page replaces everything on the board, including a saved WiFi login and settings, so the frame will ask you to set up WiFi again. Photos on the SD card are not touched. To keep your settings when updating a frame that already runs 4.0, use the <em>Firmware update</em> button on its own web page (<code>http://photoframe.local/update</code>) with an <em>update.bin</em> file from the <a href="https://github.com/Grey-Lancaster/CYD-PhotoFrame/releases/latest" target="_blank">latest release</a>.</p>
 
-  <h2>CYD (One USB Port)</h2>
-  <p>If your CYD PhotoFrame device has one USB port, click the button below to flash the firmware.</p>
+  <h2>1. CYD &mdash; ILI9341 display, normal colours</h2>
+  <p>The standard CYD with one USB port, and many boards with two USB ports. Try this one first.</p>
 
   <script
     type="module"
     src="https://unpkg.com/esp-web-tools@10/dist/web/install-button.js?module">
   </script>
 
-  <!-- Button for CYD with one USB port -->
+  <!-- ILI9341, normal colours -->
   <esp-web-install-button
     manifest="./manifest.json"
     style="display: block; margin: 20px 0;">
   </esp-web-install-button>
 
-  <h2>CYD2 (Two USB Ports)</h2>
-  <p>If your CYD2 PhotoFrame device has two USB ports, click the button below to flash the firmware.</p>
+  <h2>2. CYD2 &mdash; ST7789 display</h2>
+  <p>Boards with two USB ports and an ST7789 display. Choose this if button 1 gives a white screen.</p>
 
-  <!-- Button for CYD2 with two USB ports -->
+  <!-- ST7789 -->
   <esp-web-install-button
     manifest="./firmware2.json"
     style="display: block; margin: 20px 0;">
   </esp-web-install-button>
 
-  <p>If your CYD2 PhotoFrame device has two USB ports (alternate), click the button below to flash the firmware.</p>
+  <h2>3. CYD2 alternate &mdash; ILI9341 display, inverted colours</h2>
+  <p>Choose this if button 1 shows a negative picture (colours inverted).</p>
 
-  <!-- Alternate button for CYD2 with two USB ports -->
+  <!-- ILI9341, inverted colours -->
   <esp-web-install-button
     manifest="./CYD2bPhotoFrame.json"
     style="display: block; margin: 20px 0;">

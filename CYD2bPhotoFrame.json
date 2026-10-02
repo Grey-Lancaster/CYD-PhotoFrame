@@ -1,10 +1,10 @@
 {
-"name": "CYD2 Allternate PhotoFrame Firmware",
-  "version": "3.0.0",
+  "name": "CYD PhotoFrame 4.0 (ILI9341, inverted colours)",
+  "version": "4.0.0",
   "builds": [
     {
       "chipFamily": "ESP32",
-      "improv": true,
+      "improv": false,
       "parts": [
         {
           "path": "CYD2bPhotoFrame.bin",
