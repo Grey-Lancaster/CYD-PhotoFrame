@@ -1,5 +1,5 @@
 /*
-  CYD PhotoFrame 3.0
+  CYD PhotoFrame 4.0
 
   ESP32 "Cheap Yellow Display" photo frame:
     - slideshow of JPEGs from the SD card (any size, large photos are scaled down)

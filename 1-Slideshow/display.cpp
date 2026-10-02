@@ -39,6 +39,8 @@ static void fadeTo(uint8_t target) {
 // ---------------------------------------------------------------- setup
 void displayBegin() {
   tft.init();
+  // Panel ID, handy when picking the right build: ILI9341 reports 0x9341, ST7789 0x8552
+  Serial.printf("Display ID: RDDID=0x%06X ID4=0x%06X\n", (unsigned)tft.readcommand32(0x04) >> 8, (unsigned)tft.readcommand32(0xD3) & 0xFFFFFF);
   tft.setRotation(3);
   tft.fillScreen(TFT_BLACK);
   tft.setSwapBytes(true);
@@ -81,38 +83,102 @@ static int32_t jpgSeek(JPEGFILE *handle, int32_t position) {
   return jpgFile.seekSet(position);
 }
 
+// Fractional resize state. JPEGDEC can only scale by 1/2, 1/4 and 1/8, so the
+// decoder runs at the largest of those that is still at least as big as the
+// target and jpegDraw() resamples the remaining factor (0.5 .. 1.0).
+static struct {
+  bool active = false;
+  int ox = 0, oy = 0;          // top-left of the picture on screen
+  int dstW = 0, dstH = 0;      // picture size on screen
+  int dw = 0, dh = 0;          // decoded (power-of-2 scaled) size
+  uint32_t inv = 65536;        // 1/f in 16.16 fixed point
+  float f = 1.0f;              // scale factor decoded -> screen
+  bool smooth = false;         // average 2x2 source pixels
+} rs;
+
+static uint16_t rsBuf[4096];
+
+static inline uint16_t avg4(uint16_t a, uint16_t b, uint16_t c, uint16_t d) {
+  uint32_t r = ((a >> 11) & 31) + ((b >> 11) & 31) + ((c >> 11) & 31) + ((d >> 11) & 31);
+  uint32_t g = ((a >> 5) & 63) + ((b >> 5) & 63) + ((c >> 5) & 63) + ((d >> 5) & 63);
+  uint32_t bl = (a & 31) + (b & 31) + (c & 31) + (d & 31);
+  return ((r >> 2) << 11) | ((g >> 2) << 5) | (bl >> 2);
+}
+
 static int jpegDraw(JPEGDRAW *pDraw) {
-  tft.pushImage(pDraw->x, pDraw->y, pDraw->iWidth, pDraw->iHeight, pDraw->pPixels);
+  if (!rs.active) {
+    tft.pushImage(pDraw->x, pDraw->y, pDraw->iWidth, pDraw->iHeight, pDraw->pPixels);
+    return 1;
+  }
+  const int iw = pDraw->iWidth, ih = pDraw->iHeight;
+  // destination rectangle covered by this block (ceil keeps neighbouring blocks seamless)
+  int x0 = (int)ceilf(pDraw->x * rs.f), x1 = (int)ceilf((pDraw->x + iw) * rs.f);
+  int y0 = (int)ceilf(pDraw->y * rs.f), y1 = (int)ceilf((pDraw->y + ih) * rs.f);
+  if (x1 > rs.dstW) x1 = rs.dstW;
+  if (y1 > rs.dstH) y1 = rs.dstH;
+  int w = x1 - x0, h = y1 - y0;
+  if (w <= 0 || h <= 0) return 1;
+  if (w * h > (int)(sizeof(rsBuf) / sizeof(rsBuf[0]))) return 1;
+  const uint16_t *src = pDraw->pPixels;
+  uint16_t *out = rsBuf;
+  for (int dy = y0; dy < y1; dy++) {
+    int sy = (int)(((uint64_t)dy * rs.inv) >> 16) - pDraw->y;
+    sy = constrain(sy, 0, ih - 1);
+    int sy2 = min(sy + 1, ih - 1);
+    for (int dx = x0; dx < x1; dx++) {
+      int sx = (int)(((uint64_t)dx * rs.inv) >> 16) - pDraw->x;
+      sx = constrain(sx, 0, iw - 1);
+      if (rs.smooth) {
+        int sx2 = min(sx + 1, iw - 1);
+        *out++ = avg4(src[sy * iw + sx], src[sy * iw + sx2], src[sy2 * iw + sx], src[sy2 * iw + sx2]);
+      } else {
+        *out++ = src[sy * iw + sx];
+      }
+    }
+  }
+  tft.pushImage(rs.ox + x0, rs.oy + y0, w, h, rsBuf);
   return 1;
 }
 
-// Decode an already opened image, scaled down (1/2, 1/4, 1/8) if it is bigger
-// than the screen, and centered.
+// Decode an already opened image and show it as large as fits the screen,
+// centered. Images that are smaller than the screen are not enlarged.
 static bool decodeOpened() {
   int w = jpeg.getWidth();
   int h = jpeg.getHeight();
   int W = tft.width();
   int H = tft.height();
+  rs.active = false;
   int option = 0;
   int div = 1;
   if (w > W || h > H) {
-    if (w / 2 <= W && h / 2 <= H) {
-      option = JPEG_SCALE_HALF;
-      div = 2;
-    } else if (w / 4 <= W && h / 4 <= H) {
-      option = JPEG_SCALE_QUARTER;
-      div = 4;
+    float f0 = min((float)W / w, (float)H / h);  // overall factor needed
+    while (div < 8 && 1.0f / (div * 2) >= f0) div *= 2;
+    option = div == 2 ? JPEG_SCALE_HALF : div == 4 ? JPEG_SCALE_QUARTER : div == 8 ? JPEG_SCALE_EIGHTH : 0;
+    rs.dw = w / div;
+    rs.dh = h / div;
+    rs.f = f0 * div;
+    rs.dstW = min(W, (int)(w * f0 + 0.5f));
+    rs.dstH = min(H, (int)(h * f0 + 0.5f));
+    if (rs.f < 0.999f) {
+      rs.active = true;
+      rs.inv = (uint32_t)(65536.0f / rs.f);
+      rs.smooth = rs.f < 0.9f;
     } else {
-      option = JPEG_SCALE_EIGHTH;
-      div = 8;
+      rs.dstW = min(W, rs.dw);
+      rs.dstH = min(H, rs.dh);
     }
+  } else {
+    rs.dstW = w;
+    rs.dstH = h;
   }
-  int dw = w / div;
-  int dh = h / div;
-  if (dw < W || dh < H) tft.fillScreen(TFT_BLACK);
+  rs.ox = (W - rs.dstW) / 2;
+  rs.oy = (H - rs.dstH) / 2;
+  if (rs.dstW < W || rs.dstH < H) tft.fillScreen(TFT_BLACK);
   tft.startWrite();
-  int rc = jpeg.decode((W - dw) / 2, (H - dh) / 2, option);
+  // unscaled path draws at absolute coordinates, so pass the offset to the decoder
+  int rc = jpeg.decode(rs.active ? 0 : rs.ox, rs.active ? 0 : rs.oy, option);
   tft.endWrite();
+  rs.active = false;
   return rc == 1;
 }
 
