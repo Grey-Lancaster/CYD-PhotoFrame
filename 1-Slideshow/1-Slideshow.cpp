@@ -148,9 +148,25 @@ static void handleInput() {
     return;
   }
 
+  // While sound plays the DAC shares a pin with the touch controller, so
+  // touch readings are unreliable: ignore them, and re-init touch afterwards.
+  static bool wasAudio = false;
+  static uint32_t audioEnded = 0;
+  if (audioBusy()) {
+    wasAudio = true;
+    return;
+  }
+  if (wasAudio) {
+    wasAudio = false;
+    audioEnded = now;
+    ts.begin();
+  }
+  if (now - audioEnded < 1000) return;
+
   TouchPoint p = ts.getTouch();
-  if (p.zRaw == 0 || now - lastAction < 500) return;
+  if (p.zRaw < 400 || now - lastAction < 500) return;  // real touches read ~1000-2000
   lastAction = now;
+  Serial.printf("Touch x=%u y=%u z=%u\n", p.x, p.y, p.zRaw);
 
   int x = p.x;
 #ifdef TOUCH_FLIP_X
