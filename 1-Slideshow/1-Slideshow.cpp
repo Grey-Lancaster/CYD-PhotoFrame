@@ -64,7 +64,8 @@ static void showEmptyScreen() {
   shownName = "";
 }
 
-static void showCurrentPhoto() {
+// skipDir: which way to move on if a photo cannot be decoded
+static void showCurrentPhoto(int skipDir = 1) {
   int n = playlistCount();
   if (n == 0) {
     showEmptyScreen();
@@ -77,10 +78,12 @@ static void showCurrentPhoto() {
       shownName = name;
       screen = SCREEN_PHOTO;
       lastChange = millis();
+      Serial.printf("[%lu] Showing %d/%d %s\n", (unsigned long)millis(), playlistPosition(), n, name.c_str());
       webNotifyPhoto();
       return;
     }
-    playlistStep(1, name);  // skip a photo we cannot decode
+    Serial.printf("[%lu] Cannot decode %s, skipping\n", (unsigned long)millis(), name.c_str());
+    playlistStep(skipDir, name);  // skip a photo we cannot decode
   }
   displayShowMessage("Cannot show photos", "Unsupported or corrupt JPEG", "(progressive JPEGs don't work)", TFT_RED);
   screen = SCREEN_NONE;
@@ -90,7 +93,7 @@ static void showCurrentPhoto() {
 
 static void stepAndShow(int delta) {
   String name;
-  if (playlistStep(delta, name)) showCurrentPhoto();
+  if (playlistStep(delta, name)) showCurrentPhoto(delta);
 }
 
 static void showInfoScreen() {
@@ -176,7 +179,7 @@ static void handleInput() {
   lastDown = now;
   if (touching || now - lastAction < 500) return;
   touching = true;
-  Serial.printf("Touch x=%u y=%u z=%u\n", p.x, p.y, p.zRaw);
+  Serial.printf("[%lu] Touch x=%u y=%u z=%u\n", (unsigned long)now, p.x, p.y, p.zRaw);
 
   int x = p.x;
 #ifdef TOUCH_FLIP_X
@@ -318,6 +321,10 @@ void loop() {
   handleInput();
   handleCommands();
 
+  // Input and commands can take a while (a photo change is ~0.2-0.4 s) and
+  // reset lastChange, so read the clock again; a stale `now` would be older
+  // than lastChange and the unsigned difference would wrap to "overdue".
+  now = millis();
   if (screen == SCREEN_INFO) {
     if ((int32_t)(now - infoUntil) >= 0) showCurrentPhoto();
   } else if (!g_paused && !g_night && !audioBusy() && now - lastChange >= (uint32_t)settings.speedSec * 1000UL) {
