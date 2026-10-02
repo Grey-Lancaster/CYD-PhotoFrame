@@ -163,18 +163,18 @@ static void handleInput() {
   }
   if (now - audioEnded < 1000) return;
 
-  // One action per touch: act when the finger goes down, then wait until it
-  // has been up for a few polls (photo changes take ~0.4 s, so a time-based
-  // debounce would see the same touch twice).
+  // One action per touch: act when the finger goes down, then require the
+  // finger to be up for 250 ms before another touch counts (the pressure
+  // reading flickers during a press, and a photo change takes ~0.4 s).
   static bool touching = false;
-  static uint8_t released = 0;
+  static uint32_t lastDown = 0;
   TouchPoint p = ts.getTouch();
   if (p.zRaw < 400) {  // real touches read ~1000-2000
-    if (touching && ++released >= 3) touching = false;
+    if (touching && now - lastDown > 250) touching = false;
     return;
   }
-  released = 0;
-  if (touching || now - lastAction < 250) return;
+  lastDown = now;
+  if (touching || now - lastAction < 500) return;
   touching = true;
   Serial.printf("Touch x=%u y=%u z=%u\n", p.x, p.y, p.zRaw);
 
