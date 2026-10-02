@@ -163,9 +163,19 @@ static void handleInput() {
   }
   if (now - audioEnded < 1000) return;
 
+  // One action per touch: act when the finger goes down, then wait until it
+  // has been up for a few polls (photo changes take ~0.4 s, so a time-based
+  // debounce would see the same touch twice).
+  static bool touching = false;
+  static uint8_t released = 0;
   TouchPoint p = ts.getTouch();
-  if (p.zRaw < 400 || now - lastAction < 500) return;  // real touches read ~1000-2000
-  lastAction = now;
+  if (p.zRaw < 400) {  // real touches read ~1000-2000
+    if (touching && ++released >= 3) touching = false;
+    return;
+  }
+  released = 0;
+  if (touching || now - lastAction < 250) return;
+  touching = true;
   Serial.printf("Touch x=%u y=%u z=%u\n", p.x, p.y, p.zRaw);
 
   int x = p.x;
@@ -181,6 +191,7 @@ static void handleInput() {
   } else {
     showInfoScreen();
   }
+  lastAction = millis();  // measured after the (slow) redraw
 }
 
 // ---------------------------------------------------------------- night mode
