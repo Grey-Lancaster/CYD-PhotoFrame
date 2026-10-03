@@ -57,6 +57,8 @@ There is no password on the web interface — keep the frame on a network you tr
 
 Designed for the CYD ESP32-2432S028 family: ILI9341 (or ST7789) 320×240 display, XPT2046 touch, SD slot, speaker on GPIO26, backlight on GPIO21.
 
+You can buy the board on [Amazon](https://amzn.to/3UVQwrV) (under $20) — or search for "ESP32-2432S028" / "Cheap Yellow Display" on AliExpress (about $13, 2-week shipping).
+
 ## Troubleshooting
 
 - **White screen, or colours look like a negative** — "2 USB" boards come with either an ST7789 or an ILI9341 panel. Open the serial monitor and look for the `Display ID:` line: `ID4=0x009341` means ILI9341 (use `cyd`, or `cyd2b` if colours are inverted); `0x008552` means ST7789 (use `cyd2usb`).
