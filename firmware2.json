@@ -1,6 +1,6 @@
 {
-  "name": "CYD PhotoFrame 4.0 (ST7789)",
-  "version": "4.0.0",
+  "name": "CYD PhotoFrame 4.1 (ST7789)",
+  "version": "4.1.0",
   "builds": [
     {
       "chipFamily": "ESP32",
