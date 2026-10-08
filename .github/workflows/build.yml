@@ -69,51 +69,49 @@ jobs:
           prerelease: ${{ contains(github.ref_name, '-') }}   # tags like v4.2-beta1 are marked pre-release
           files: dist/*
           body: |
-            ## Which file do I need?
+            ## Easiest: the web installer
 
-            Your board's panel decides the build. In a serial monitor the frame prints a
-            `Display ID:` line at boot (`0x9341` = ILI9341, `0x8552` = ST7789).
+            ### [➡ Open the Web Installer](https://grey-lancaster.github.io/CYD-PhotoFrame/)
 
-            | Build | Panel | Boards |
+            Use **Chrome or Edge on a computer**, plug the frame in by USB and click the button for your display:
+
+            | Installer button | Build file | Display |
             | --- | --- | --- |
-            | `cyd` | ILI9341, normal colours | Most CYDs, including many "2 USB" boards |
-            | `cyd2b` | ILI9341, inverted colours | "2B" variant |
-            | `cyd2usb` | ST7789 | ST7789 "2 USB" boards |
-            | `cyd35` | ST7796 480×320 | 3.5" CYD (experimental, touch calibration on first start) |
+            | **1. CYD** | `cyd` | ILI9341, normal colours: the standard CYD and many "2 USB" boards. **Try this first.** |
+            | **2. CYD2** | `cyd2usb` | ST7789: "2 USB" boards with an ST7789 display |
+            | **3. CYD2 alternate** | `cyd2b` | ILI9341, inverted colours |
+            | *(no button yet)* | `cyd35` | 3.5" CYD, ST7796 480×320 (experimental, see below) |
 
-            Wrong build = white screen or a negative picture; just flash another one.
+            Wrong button = white screen or a negative picture. Nothing is damaged, just try another one.
+            If only the colours are off, you don't need another file: open the frame's web page, go to
+            *Settings* and tick **Swap red and blue** (reds look blue) or **Invert colours** (negative picture).
+            The installer offers the latest stable release; a beta like this one is installed from the files below.
 
-            - **`*-factory.bin`**: complete image (bootloader, partitions, firmware, splash image).
-              Flash at offset **0** with the web installer, or
-              `esptool.py --chip esp32 write_flash 0x0 CYD-PhotoFrame-cyd-factory.bin`.
-            - **`*-update.bin`**: firmware only, for an already running frame (`http://photoframe.local/update`).
+            ## Files in this release
 
-            The factory image replaces everything on the board, so it also **erases the saved WiFi
-            login and settings** (you will see the `ESP32_AP` setup screen again). Use the update
-            file to keep them. Photos on the SD card are never touched.
+            - **`*-factory.bin`**: the complete image. This is what the installer flashes (offset 0).
+              It **erases the saved WiFi login and settings**, so you set up WiFi again. Photos on the SD card are never touched.
+              Or: `esptool.py --chip esp32 write_flash 0x0 CYD-PhotoFrame-cyd-factory.bin`
+            - **`*-update.bin`**: firmware only, for a frame that is already running: open
+              `http://photoframe.local/update` and upload it. Keeps your WiFi login and settings.
 
-            ## 4.2 beta: 3.5-inch CYD test build
+            ## What's new in 4.2 beta: 3.5-inch CYD test build
 
-            - **New `cyd35` build** for the 3.5" CYD (ST7796, 480×320). The touch controller on that
-              board shares the display's SPI pins, which froze the display in earlier versions
-              (issue #3). Touch now goes through TFT_eSPI, with a one-time four-corner calibration
-              on first start (and a *Recalibrate touch* button in the web page's System panel).
-              **Untested by the maintainer, reports welcome on issue #3.**
-            - **New setting: Invert colours** (web page, *Settings*), next to *Swap red and blue*,
-              for panels that show a negative picture.
-            - Flashing a `*-factory.bin` erases the saved WiFi login and settings. Building from the
-              `cyd35` branch with `pio run -e cyd35 -t upload` works too.
+            - **New `cyd35` build** for the 3.5" CYD (ST7796, 480×320). Its touch controller shares the
+              display's SPI pins, which froze the display in earlier versions (issue #3). Touch now goes
+              through TFT_eSPI, with a one-time four-corner calibration on first start (and a
+              *Recalibrate touch* button in the web page's System panel).
+              **Untested by the maintainer, please report on issue #3.** Easiest: upload
+              `CYD-PhotoFrame-cyd35-update.bin` on the `/update` page of a frame that is already on WiFi.
+            - **New setting: Invert colours** (*Settings*), next to *Swap red and blue*.
 
             ## What's new in 4.1
 
-            - **New setting: Swap red and blue** (web page, *Settings*). If the colours in your
-              photos look wrong (reds are blue), tick it and save; it applies immediately and is
-              remembered. Fixes the colour order on panels that are wired the other way round.
+            - **New setting: Swap red and blue** (*Settings*). Fixes the colour order on panels wired the other way round.
             - Display set-up hardened: the panel-ID read at boot can no longer affect the colour order.
 
             ## 4.0 (major rework)
 
-            SD card access is thread-safe, uploads/deletes are reliable, new single-page web
-            interface (drag-and-drop upload with in-browser resize, thumbnails, settings), touch
-            controls, night mode, MP3 support, large photos scaled to fit, works without WiFi.
-            See the README.
+            SD card access is thread-safe, uploads/deletes are reliable, new single-page web interface
+            (drag-and-drop upload with in-browser resize, thumbnails, settings), touch controls, night mode,
+            MP3 support, large photos scaled to fit, works without WiFi. See the README.

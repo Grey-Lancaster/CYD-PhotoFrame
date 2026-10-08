@@ -9,7 +9,16 @@ A photo frame for the ESP32 **"Cheap Yellow Display" (CYD)** — a ~$15 board wi
 Plug the frame into your computer with a USB cable, click a button, done — no software to install.
 
 - Use **Chrome or Edge on a computer**. Firefox, Safari and phones can't flash over USB.
-- **Which button?** It depends on the display panel in your board, not the number of USB ports. Start with button **1**. If the screen stays white or the picture looks like a negative, nothing is damaged — just try button 2 or 3.
+- **Which button?** It depends on the display panel in your board, not the number of USB ports. Start with button **1**. If the screen stays white or the picture looks like a negative, nothing is damaged, just try another:
+
+  | Installer button | Build | Display |
+  | --- | --- | --- |
+  | **1. CYD** | `cyd` | ILI9341, normal colours: the standard CYD and many "2 USB" boards |
+  | **2. CYD2** | `cyd2usb` | ST7789 ("2 USB" boards with an ST7789 display) |
+  | **3. CYD2 alternate** | `cyd2b` | ILI9341, inverted colours |
+
+  Only the colours off? You don't need another file: in the frame's web page, *Settings*, tick **Swap red and blue** or **Invert colours**.
+  The 3.5" CYD isn't in the installer yet (see below).
 - Installing from the page replaces everything on the board, so you'll set up WiFi again. Photos on the SD card are not touched.
 - If your computer doesn't see the board, install the CH340 USB driver (links on the installer page).
 
