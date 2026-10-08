@@ -85,7 +85,7 @@ jobs:
             Wrong button = white screen or a negative picture. Nothing is damaged, just try another one.
             If only the colours are off, you don't need another file: open the frame's web page, go to
             *Settings* and tick **Swap red and blue** (reds look blue) or **Invert colours** (negative picture).
-            The installer offers the latest stable release; a beta like this one is installed from the files below.
+            The 3.5" CYD isn't in the installer yet; use the files below for it.
 
             ## Files in this release
 
@@ -95,13 +95,16 @@ jobs:
             - **`*-update.bin`**: firmware only, for a frame that is already running: open
               `http://photoframe.local/update` and upload it. Keeps your WiFi login and settings.
 
-            ## What's new in 4.2 beta: 3.5-inch CYD test build
+            ## What's new in 4.2
 
+            - **Watchdog:** if the main loop ever hangs for 30 seconds, the frame restarts itself instead of freezing.
+            - **Last restart reason** in the web page's *System* panel (power on, crash, watchdog, brownout...),
+              so crashes can be spotted without a serial cable.
             - **New `cyd35` build** for the 3.5" CYD (ST7796, 480×320). Its touch controller shares the
               display's SPI pins, which froze the display in earlier versions (issue #3). Touch now goes
               through TFT_eSPI, with a one-time four-corner calibration on first start (and a
               *Recalibrate touch* button in the web page's System panel).
-              **Untested by the maintainer, please report on issue #3.** Easiest: upload
+              **Experimental, please report on issue #3.** Easiest: upload
               `CYD-PhotoFrame-cyd35-update.bin` on the `/update` page of a frame that is already on WiFi.
             - **New setting: Invert colours** (*Settings*), next to *Swap red and blue*.
 
