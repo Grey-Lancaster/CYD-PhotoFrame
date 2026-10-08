@@ -39,9 +39,8 @@ static void fadeTo(uint8_t target) {
 // ---------------------------------------------------------------- setup
 void displayBegin() {
   tft.init();
-  // Panel ID, handy when picking the right build: ILI9341 reports 0x9341, ST7789 0x8552
-  Serial.printf("Display ID: RDDID=0x%06X ID4=0x%06X\n", (unsigned)tft.readcommand32(0x04) >> 8, (unsigned)tft.readcommand32(0xD3) & 0xFFFFFF);
   tft.setRotation(3);
+  displayApplyColorOrder();
   tft.fillScreen(TFT_BLACK);
   tft.setSwapBytes(true);
 
@@ -57,6 +56,27 @@ void displayBegin() {
   ledcSetup(BL_CHANNEL, 5000, 8);
   ledcAttachPin(TFT_BL, BL_CHANNEL);
   displaySetBrightness(settings.brightness);
+
+  // Panel ID, handy when picking the right build: ILI9341 reports 0x9341, ST7789 0x8552.
+  // Read after the display is fully set up, then restore the rotation/colour order the
+  // read-back sequence may have touched.
+  Serial.printf("Display ID: RDDID=0x%06X ID4=0x%06X\n", (unsigned)tft.readcommand32(0x04) >> 8, (unsigned)tft.readcommand32(0xD3) & 0xFFFFFF);
+  tft.setRotation(3);
+  displayApplyColorOrder();
+}
+
+// Rotation 3 as TFT_eSPI sets it, with the panel's red/blue order optionally flipped.
+// Some panels of the same controller type are wired the other way round, so this is a
+// setting instead of a build option.
+void displayApplyColorOrder() {
+#if defined(ST7789_DRIVER)
+  const uint8_t base = TFT_MAD_MV | TFT_MAD_MY;
+#else  // ILI9341 family
+  const uint8_t base = TFT_MAD_MX | TFT_MAD_MY | TFT_MAD_MV;
+#endif
+  const uint8_t order = settings.swapRB ? (TFT_MAD_COLOR_ORDER ^ TFT_MAD_BGR) : TFT_MAD_COLOR_ORDER;
+  tft.writecommand(TFT_MADCTL);
+  tft.writedata(base | order);
 }
 
 // ---------------------------------------------------------------- JPEG

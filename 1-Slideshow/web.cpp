@@ -86,6 +86,7 @@ static String statusJson() {
   out += ",\"bright\":" + String(settings.brightness);
   out += ",\"volume\":" + String(settings.volume);
   out += String(",\"shuffle\":") + (settings.shuffle ? "true" : "false");
+  out += String(",\"swaprb\":") + (settings.swapRB ? "true" : "false");
   out += String(",\"sndup\":") + (settings.soundOnUpload ? "true" : "false");
   out += String(",\"night\":") + (settings.nightEnabled ? "true" : "false");
   out += ",\"nstart\":" + String(settings.nightStart);
@@ -181,6 +182,8 @@ static void setupRoutes() {
     if ((v = param(r, "volume")).length()) settings.volume = constrain(v.toInt(), 0, 100);
     if ((v = param(r, "shuffle")).length()) settings.shuffle = v.toInt() != 0;
     if ((v = param(r, "sndup")).length()) settings.soundOnUpload = v.toInt() != 0;
+    bool swapBefore = settings.swapRB;
+    if ((v = param(r, "swaprb")).length()) settings.swapRB = v.toInt() != 0;
     if ((v = param(r, "night")).length()) settings.nightEnabled = v.toInt() != 0;
     if ((v = param(r, "nstart")).length()) settings.nightStart = constrain(v.toInt(), 0, 23);
     if ((v = param(r, "nend")).length()) settings.nightEnd = constrain(v.toInt(), 0, 23);
@@ -188,6 +191,11 @@ static void setupRoutes() {
     settingsSave();
     if (!g_night) displaySetBrightness(settings.brightness);
     if (tzBefore != settings.tz) applyTimezone();
+    if (swapBefore != settings.swapRB) {
+      displayApplyColorOrder();
+      String cur;
+      if (playlistCurrent(cur)) cmdSend(CMD_SHOW, cur.c_str());  // redraw with the new colour order
+    }
     if (shuffleBefore != settings.shuffle) playlistRescan();
     sendJson(r, 200, "{\"ok\":true}");
   });

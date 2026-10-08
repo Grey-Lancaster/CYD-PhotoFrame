@@ -88,6 +88,7 @@ details{margin-top:12px;color:var(--mut);font-size:13px}
     <label>Screen brightness <span id="bv"></span><input type="range" id="bright" min="5" max="100"></label>
     <label>Sound volume <span id="vv"></span><input type="range" id="volume" min="0" max="100"></label>
     <label class="chk"><input type="checkbox" id="shuffle"> Shuffle order</label>
+    <label class="chk"><input type="checkbox" id="swaprb"> Swap red and blue (use if photo colours look wrong)</label>
     <label class="chk"><input type="checkbox" id="sndup"> Play the sound when a file is uploaded</label>
     <label class="chk"><input type="checkbox" id="night"> Turn screen off at night</label>
     <label>Off from<select id="nstart"></select></label>
@@ -145,7 +146,7 @@ function fmtUp(s){const d=Math.floor(s/86400),h=Math.floor(s%86400/3600),m=Math.
 
 function fillSettings(s){
   $('#speed').value=s.speed;$('#bright').value=s.bright;$('#volume').value=s.volume;
-  $('#shuffle').checked=s.shuffle;$('#sndup').checked=s.sndup;$('#night').checked=s.night;
+  $('#shuffle').checked=s.shuffle;$('#swaprb').checked=s.swaprb;$('#sndup').checked=s.sndup;$('#night').checked=s.night;
   $('#nstart').value=s.nstart;$('#nend').value=s.nend;
   const tz=$('#tz');if(![...tz.options].some(o=>o.value===s.tz))tz.add(new Option(s.tz,s.tz));tz.value=s.tz;
   $('#bv').textContent=s.bright+'%';$('#vv').textContent=s.volume+'%';
@@ -200,7 +201,7 @@ document.querySelectorAll('#sf input,#sf select').forEach(e=>e.oninput=()=>{dirt
 $('#save').onclick=async()=>{
   try{
     await post('/api/settings',{speed:$('#speed').value,bright:$('#bright').value,volume:$('#volume').value,
-      shuffle:$('#shuffle').checked?1:0,sndup:$('#sndup').checked?1:0,night:$('#night').checked?1:0,
+      shuffle:$('#shuffle').checked?1:0,swaprb:$('#swaprb').checked?1:0,sndup:$('#sndup').checked?1:0,night:$('#night').checked?1:0,
       nstart:$('#nstart').value,nend:$('#nend').value,tz:$('#tz').value});
     dirty=false;toast('Saved');loadStatus();
   }catch(e){toast(e.message)}

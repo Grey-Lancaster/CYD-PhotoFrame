@@ -12,6 +12,7 @@ void settingsLoad() {
   settings.brightness = constrain(prefs.getUChar("bright", settings.brightness), 5, 100);
   settings.volume = constrain(prefs.getUChar("volume", settings.volume), 0, 100);
   settings.soundOnUpload = prefs.getBool("sndUp", settings.soundOnUpload);
+  settings.swapRB = prefs.getBool("swapRB", settings.swapRB);
   settings.nightEnabled = prefs.getBool("night", settings.nightEnabled);
   settings.nightStart = prefs.getUChar("nStart", settings.nightStart) % 24;
   settings.nightEnd = prefs.getUChar("nEnd", settings.nightEnd) % 24;
@@ -27,6 +28,7 @@ void settingsSave() {
   prefs.putUChar("bright", settings.brightness);
   prefs.putUChar("volume", settings.volume);
   prefs.putBool("sndUp", settings.soundOnUpload);
+  prefs.putBool("swapRB", settings.swapRB);
   prefs.putBool("night", settings.nightEnabled);
   prefs.putUChar("nStart", settings.nightStart);
   prefs.putUChar("nEnd", settings.nightEnd);
