@@ -66,6 +66,7 @@ jobs:
       - uses: softprops/action-gh-release@v2
         with:
           name: CYD PhotoFrame ${{ github.ref_name }}
+          prerelease: ${{ contains(github.ref_name, '-') }}   # tags like v4.2-beta1 are marked pre-release
           files: dist/*
           body: |
             ## Which file do I need?
@@ -78,6 +79,7 @@ jobs:
             | `cyd` | ILI9341, normal colours | Most CYDs, including many "2 USB" boards |
             | `cyd2b` | ILI9341, inverted colours | "2B" variant |
             | `cyd2usb` | ST7789 | ST7789 "2 USB" boards |
+            | `cyd35` | ST7796 480×320 | 3.5" CYD (experimental, touch calibration on first start) |
 
             Wrong build = white screen or a negative picture; just flash another one.
 
