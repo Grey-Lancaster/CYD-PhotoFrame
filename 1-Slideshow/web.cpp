@@ -80,6 +80,7 @@ static String statusJson() {
   out += ",\"heap\":" + String(ESP.getFreeHeap());
   out += ",\"rssi\":" + String(WiFi.RSSI());
   out += ",\"up\":" + String((uint32_t)(millis() / 1000));
+  out += ",\"reset\":" + jsonString(g_resetReason);
   out += ",\"time\":" + jsonString(time);
   out += ",\"s\":{";
   out += "\"speed\":" + String(settings.speedSec);

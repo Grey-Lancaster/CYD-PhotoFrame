@@ -167,7 +167,7 @@ async function loadStatus(){
   $('#recal').hidden=!st.touchcal;
   $('#play').disabled=!st.audio||st.audioBusy;$('#delaudio').disabled=!st.audio;
   $('#sys').innerHTML='';
-  const rows=[['Address',st.ip+' / '+st.host+'.local'],['WiFi signal',st.rssi+' dBm'],['Free memory',Math.round(st.heap/1024)+' KB'],['Uptime',fmtUp(st.up)],['SD card',st.sd?'OK':'not found'],['Clock',st.time||'not set (night mode needs internet)']];
+  const rows=[['Address',st.ip+' / '+st.host+'.local'],['WiFi signal',st.rssi+' dBm'],['Free memory',Math.round(st.heap/1024)+' KB'],['Uptime',fmtUp(st.up)],['Last restart',st.reset||'unknown'],['SD card',st.sd?'OK':'not found'],['Clock',st.time||'not set (night mode needs internet)']];
   for(const[k,v]of rows){const a=document.createElement('dt'),b=document.createElement('dd');a.textContent=k;b.textContent=v;$('#sys').append(a,b)}
 }
 

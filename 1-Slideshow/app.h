@@ -117,4 +117,5 @@ extern volatile bool g_night;
 extern volatile bool g_otaActive;
 extern volatile uint32_t g_restartAt;           // millis() deadline for a requested restart (0 = none)
 extern String g_ip;
+extern String g_resetReason;                  // why the frame last restarted (power on, crash, watchdog...)
 void applyTimezone();

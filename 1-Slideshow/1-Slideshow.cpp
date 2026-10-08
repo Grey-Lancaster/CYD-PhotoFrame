@@ -20,12 +20,15 @@
 #endif
 #include <time.h>
 #include "SPIFFS.h"
+#include "esp_system.h"
+#include "esp_task_wdt.h"
 #include "app.h"
 
 volatile bool g_paused = false;
 volatile bool g_night = false;
 volatile bool g_otaActive = false;
 String g_ip;
+String g_resetReason;
 
 static QueueHandle_t cmdQueue;
 #ifndef TOUCH_CS
@@ -44,6 +47,21 @@ static ScreenState screen = SCREEN_NONE;
 static String shownName;
 static uint32_t lastChange = 0;
 static uint32_t infoUntil = 0;
+
+static const char *resetReasonText(esp_reset_reason_t r) {
+  switch (r) {
+    case ESP_RST_POWERON: return "Power on";
+    case ESP_RST_EXT: return "Reset button";
+    case ESP_RST_SW: return "Restart (software)";
+    case ESP_RST_PANIC: return "Crash (panic)";
+    case ESP_RST_INT_WDT: return "Crash (interrupt watchdog)";
+    case ESP_RST_TASK_WDT: return "Hang (watchdog restarted it)";
+    case ESP_RST_WDT: return "Hang (watchdog)";
+    case ESP_RST_BROWNOUT: return "Brownout (power dip)";
+    case ESP_RST_DEEPSLEEP: return "Deep sleep wake";
+    default: return "Unknown";
+  }
+}
 
 void IRAM_ATTR buttonInt() {
   buttonPressed = true;
@@ -286,6 +304,8 @@ static void startNetworkServices() {
 void setup() {
   Serial.begin(115200);
   Serial.println("\nCYD PhotoFrame " FW_VERSION);
+  g_resetReason = resetReasonText(esp_reset_reason());
+  Serial.println(String("Reset reason: ") + g_resetReason);
 
   cmdQueue = xQueueCreate(8, sizeof(Cmd));
   pinMode(0, INPUT);
@@ -332,12 +352,18 @@ void setup() {
     else showEmptyScreen();
   }
   lastChange = millis();
+
+  // Watchdog: if the main loop ever hangs for 30 s, restart instead of freezing.
+  // Only armed here, after set-up (WiFi portal and touch calibration may wait for people).
+  esp_task_wdt_init(30, true);
+  esp_task_wdt_add(NULL);
 }
 
 void loop() {
   static bool wasOta = false;
   static uint32_t lastMountTry = 0, lastWifiTry = 0;
   uint32_t now = millis();
+  esp_task_wdt_reset();
 
   if (servicesStarted) webLoop();
   if (g_restartAt && (int32_t)(now - g_restartAt) >= 0) ESP.restart();
