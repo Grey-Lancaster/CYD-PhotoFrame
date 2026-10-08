@@ -10,12 +10,20 @@
 
 A photo frame for the ESP32 **"Cheap Yellow Display" (CYD)** — a ~$15 board with a 320×240 touch screen, SD card slot and speaker. Photos live on the SD card, and you manage everything from your phone or PC through a built-in web page.
 
-## Install
+## ⚡ Easiest way to install
 
-**Easiest:** use the browser-based installer — no tools needed:
-[**➡ CYD-PhotoFrame Web Installer**](https://grey-lancaster.github.io/CYD-PhotoFrame/)
+### [➡ Open the Web Installer](https://grey-lancaster.github.io/CYD-PhotoFrame/)
 
-**From source:** install [PlatformIO](https://platformio.org/) and run one of
+Plug the frame into your computer with a USB cable, click a button, done — no software to install.
+
+- Use **Chrome or Edge on a computer**. Firefox, Safari and phones can't flash over USB.
+- **Which button?** It depends on the display panel in your board, not the number of USB ports. Start with button **1**. If the screen stays white or the picture looks like a negative, nothing is damaged — just try button 2 or 3.
+- Installing from the page replaces everything on the board, so you'll set up WiFi again. Photos on the SD card are not touched.
+- If your computer doesn't see the board, install the CH340 USB driver (links on the installer page).
+
+## Install from source
+
+Prefer to build it yourself? Install [PlatformIO](https://platformio.org/) and run one of
 
 ```
 pio run -e cyd -t upload          # standard CYD (ILI9341)
