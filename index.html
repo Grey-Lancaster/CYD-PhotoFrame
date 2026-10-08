@@ -10,12 +10,12 @@
 
 <body>
 
-  <h1>Flash Your CYD PhotoFrame Firmware to 4.1!</h1>
+  <h1>Flash Your CYD PhotoFrame Firmware to 4.2!</h1>
   <p><strong>A guide to flashing ESP32 firmware for the CYD PhotoFrame.</strong> This ESP32 project features a slideshow viewer and built-in WiFi setup, perfect for showcasing your images using the Cheap Yellow Display (CYD) board.</p>
   <p>Code for this project: <a href="https://github.com/Grey-Lancaster/CYD-PhotoFrame" target="_blank">GitHub Repository</a>.</p>
   <p>After uploading the firmware, the LCD screen should guide you through WiFi setup. For full setup instructions, visit the <a href="https://github.com/Grey-Lancaster/CYD-PhotoFrame/wiki/setup-instructions" target="_blank">Wiki Setup Page</a>.</p>
   <p>If you do not see the COM port, you may need to install the CH340 drivers. See the instructions below.</p>
-  <p>Click one of the buttons below to flash the latest firmware (<strong>version 4.1</strong>) to your ESP32 device.</p>
+  <p>Click one of the buttons below to flash the latest firmware (<strong>version 4.2</strong>) to your ESP32 device.</p>
   <p><strong>Which button?</strong> It depends on the display panel in your board, not on the number of USB ports. If you pick the wrong one the screen stays <em>white</em> or the picture looks like a <em>negative</em> &mdash; nothing is damaged, just flash another button. Start with the first one. If photo colours look wrong (reds are blue) but nothing else, you don&rsquo;t need another file: open the frame&rsquo;s web page, go to <em>Settings</em> and tick <strong>Swap red and blue</strong>.</p>
   <p><strong>Note:</strong> installing from this page replaces everything on the board, including a saved WiFi login and settings, so the frame will ask you to set up WiFi again. Photos on the SD card are not touched. To keep your settings when updating a frame that already runs 4.0, use the <em>Firmware update</em> button on its own web page (<code>http://photoframe.local/update</code>) with an <em>update.bin</em> file from the <a href="https://github.com/Grey-Lancaster/CYD-PhotoFrame/releases/latest" target="_blank">latest release</a>.</p>
 
@@ -52,9 +52,9 @@
   </esp-web-install-button>
 
   <h2>4. 3.5-inch CYD (experimental)</h2>
-  <p>The 3.5-inch CYD (ST7796 display, 480&times;320) can&rsquo;t be flashed from this page yet, because its build is still being tested. If you have one that is already running this firmware and is on your WiFi, you can try the beta over WiFi:</p>
+  <p>The 3.5-inch CYD (ST7796 display, 480&times;320) can&rsquo;t be flashed from this page yet, because it is still experimental. If you have one that is already running this firmware and is on your WiFi, you can try it over WiFi:</p>
   <ol>
-    <li>Download <a href="https://github.com/Grey-Lancaster/CYD-PhotoFrame/releases/download/v4.2-beta1/CYD-PhotoFrame-cyd35-update.bin">CYD-PhotoFrame-cyd35-update.bin</a> (from the <a href="https://github.com/Grey-Lancaster/CYD-PhotoFrame/releases/tag/v4.2-beta1" target="_blank">v4.2-beta1 pre-release</a>).</li>
+    <li>Download <a href="https://github.com/Grey-Lancaster/CYD-PhotoFrame/releases/download/v4.2/CYD-PhotoFrame-cyd35-update.bin">CYD-PhotoFrame-cyd35-update.bin</a> (from the <a href="https://github.com/Grey-Lancaster/CYD-PhotoFrame/releases/tag/v4.2" target="_blank">v4.2 release</a>).</li>
     <li>Open <code>http://photoframe.local/update</code> in your browser, choose the file and upload it. The frame restarts by itself and keeps your WiFi login.</li>
     <li>On first start the frame asks you to touch the four corners of the screen to calibrate touch. After that your photos should appear.</li>
   </ol>

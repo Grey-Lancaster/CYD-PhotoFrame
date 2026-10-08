@@ -1,6 +1,6 @@
 # CYD PhotoFrame
 
-> **About this branch:** `gh-pages` hosts the [web installer](https://grey-lancaster.github.io/CYD-PhotoFrame/) (`index.html`, the three manifest `.json` files and the factory images they flash). The source code is on the [`main` branch](https://github.com/Grey-Lancaster/CYD-PhotoFrame), and every build is on the [Releases page](https://github.com/Grey-Lancaster/CYD-PhotoFrame/releases). The images here are the **v4.1** release:
+> **About this branch:** `gh-pages` hosts the [web installer](https://grey-lancaster.github.io/CYD-PhotoFrame/) (`index.html`, the three manifest `.json` files and the factory images they flash). The source code is on the [`main` branch](https://github.com/Grey-Lancaster/CYD-PhotoFrame), and every build is on the [Releases page](https://github.com/Grey-Lancaster/CYD-PhotoFrame/releases). The images here are the **v4.2** release:
 >
 > | File | Build |
 > | --- | --- |
@@ -96,6 +96,7 @@ You can buy the board on [Amazon](https://amzn.to/3UVQwrV) (under $20) — or se
 ## Troubleshooting
 
 - **White screen, or colours look like a negative** — "2 USB" boards come with either an ST7789 or an ILI9341 panel. Open the serial monitor and look for the `Display ID:` line: `ID4=0x009341` means ILI9341 (use `cyd`, or `cyd2b` if colours are inverted); `0x008552` means ST7789 (use `cyd2usb`).
+- **Is it crashing or restarting?** Open the web page: the *System* panel shows **Last restart** (power on, crash, watchdog, brownout). "Brownout" or random "Power on" usually means a weak USB cable or port. A built-in watchdog restarts the frame if it ever hangs.
 - **Photos look like a negative** — in the web page's *Settings* tick **Invert colours**.
 - **Red and blue swapped (reds look blue)** — panels of the same type are wired differently. Open the web page, go to *Settings* and tick **Swap red and blue**, then *Save settings*. It applies immediately and is remembered.
 - **"No SD card"** — re-seat the card; the frame retries every few seconds. FAT32 only.
