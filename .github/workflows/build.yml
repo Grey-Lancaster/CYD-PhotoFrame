@@ -15,7 +15,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        env: [cyd, cyd2usb, cyd2b]
+        env: [cyd, cyd2usb, cyd2b, cyd35]
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5

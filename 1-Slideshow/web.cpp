@@ -87,6 +87,10 @@ static String statusJson() {
   out += ",\"volume\":" + String(settings.volume);
   out += String(",\"shuffle\":") + (settings.shuffle ? "true" : "false");
   out += String(",\"swaprb\":") + (settings.swapRB ? "true" : "false");
+  out += String(",\"invert\":") + (settings.invert ? "true" : "false");
+#ifdef TOUCH_CS
+  out += ",\"touchcal\":true";
+#endif
   out += String(",\"sndup\":") + (settings.soundOnUpload ? "true" : "false");
   out += String(",\"night\":") + (settings.nightEnabled ? "true" : "false");
   out += ",\"nstart\":" + String(settings.nightStart);
@@ -183,6 +187,8 @@ static void setupRoutes() {
     if ((v = param(r, "shuffle")).length()) settings.shuffle = v.toInt() != 0;
     if ((v = param(r, "sndup")).length()) settings.soundOnUpload = v.toInt() != 0;
     bool swapBefore = settings.swapRB;
+    bool invertBefore = settings.invert;
+    if ((v = param(r, "invert")).length()) settings.invert = v.toInt() != 0;
     if ((v = param(r, "swaprb")).length()) settings.swapRB = v.toInt() != 0;
     if ((v = param(r, "night")).length()) settings.nightEnabled = v.toInt() != 0;
     if ((v = param(r, "nstart")).length()) settings.nightStart = constrain(v.toInt(), 0, 23);
@@ -191,6 +197,7 @@ static void setupRoutes() {
     settingsSave();
     if (!g_night) displaySetBrightness(settings.brightness);
     if (tzBefore != settings.tz) applyTimezone();
+    if (invertBefore != settings.invert) displayApplyInversion();
     if (swapBefore != settings.swapRB) {
       displayApplyColorOrder();
       String cur;
@@ -216,6 +223,14 @@ static void setupRoutes() {
     if (ok) sendJson(r, 200, "{\"ok\":true}");
     else sendError(r, 500, "Some files could not be deleted");
   });
+
+#ifdef TOUCH_CS
+  server.on("/api/recal", HTTP_POST, [](AsyncWebServerRequest *r) {
+    settingsClearTouchCal();  // the frame asks for the four corners again after the restart
+    g_restartAt = millis() + 600;
+    sendJson(r, 200, "{\"ok\":true}");
+  });
+#endif
 
   server.on("/api/play", HTTP_POST, [](AsyncWebServerRequest *r) {
     if (audioPlay()) sendJson(r, 200, "{\"ok\":true}");

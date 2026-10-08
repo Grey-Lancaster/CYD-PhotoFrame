@@ -21,8 +21,17 @@ Prefer to build it yourself? Install [PlatformIO](https://platformio.org/) and r
 pio run -e cyd -t upload          # standard CYD (ILI9341)
 pio run -e cyd2usb -t upload      # CYD with 2 USB ports (ST7789)
 pio run -e cyd2b -t upload        # CYD "2B" variant (inverted colours)
+pio run -e cyd35 -t upload        # 3.5" CYD, ST7796 480x320 (experimental, see below)
 pio run -e cyd -t uploadfs        # splash image + favicon (data/ folder), once
 ```
+
+## 3.5" CYD (experimental)
+
+The `cyd35` build is for the 3.5-inch CYD (ESP32-3248S035, ST7796 480×320, resistive touch). It differs from the 2.8" boards in two ways: the backlight is on GPIO27, and the touch controller shares the display's SPI pins, so touch is handled by TFT_eSPI (a bit-banged driver would take over the display's pins and freeze the screen).
+
+- **Touch calibration:** the first time it starts, the frame asks you to touch four corners. It is saved; the web page's *System* panel has a **Recalibrate touch** button.
+- **Colours look wrong?** In *Settings* try **Swap red and blue** and/or **Invert colours**; they apply immediately.
+- This build has **not been tested by the maintainer** (no board). Reports on [issue #3](https://github.com/Grey-Lancaster/CYD-PhotoFrame/issues/3) are welcome. The status screens are laid out for 320×240, so they sit in the upper-left of the larger screen; photos are scaled to fit.
 
 ## First start
 
@@ -70,6 +79,7 @@ You can buy the board on [Amazon](https://amzn.to/3UVQwrV) (under $20) — or se
 ## Troubleshooting
 
 - **White screen, or colours look like a negative** — "2 USB" boards come with either an ST7789 or an ILI9341 panel. Open the serial monitor and look for the `Display ID:` line: `ID4=0x009341` means ILI9341 (use `cyd`, or `cyd2b` if colours are inverted); `0x008552` means ST7789 (use `cyd2usb`).
+- **Photos look like a negative** — in the web page's *Settings* tick **Invert colours**.
 - **Red and blue swapped (reds look blue)** — panels of the same type are wired differently. Open the web page, go to *Settings* and tick **Swap red and blue**, then *Save settings*. It applies immediately and is remembered.
 - **"No SD card"** — re-seat the card; the frame retries every few seconds. FAT32 only.
 - **"Cannot show photos"** — all photos failed to decode (progressive/corrupt JPEG). Re-upload them through the web page.

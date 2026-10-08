@@ -41,6 +41,7 @@ void displayBegin() {
   tft.init();
   tft.setRotation(3);
   displayApplyColorOrder();
+  displayApplyInversion();
   tft.fillScreen(TFT_BLACK);
   tft.setSwapBytes(true);
 
@@ -63,6 +64,7 @@ void displayBegin() {
   Serial.printf("Display ID: RDDID=0x%06X ID4=0x%06X\n", (unsigned)tft.readcommand32(0x04) >> 8, (unsigned)tft.readcommand32(0xD3) & 0xFFFFFF);
   tft.setRotation(3);
   displayApplyColorOrder();
+  displayApplyInversion();
 }
 
 // Rotation 3 as TFT_eSPI sets it, with the panel's red/blue order optionally flipped.
@@ -77,6 +79,16 @@ void displayApplyColorOrder() {
   const uint8_t order = settings.swapRB ? (TFT_MAD_COLOR_ORDER ^ TFT_MAD_BGR) : TFT_MAD_COLOR_ORDER;
   tft.writecommand(TFT_MADCTL);
   tft.writedata(base | order);
+}
+
+// The build decides whether the panel is inverted (TFT_INVERSION_ON/OFF); the
+// setting flips that, for panels that need the opposite (photos look like a negative).
+void displayApplyInversion() {
+#ifdef TFT_INVERSION_ON
+  tft.invertDisplay(!settings.invert);
+#else
+  tft.invertDisplay(settings.invert);
+#endif
 }
 
 // ---------------------------------------------------------------- JPEG

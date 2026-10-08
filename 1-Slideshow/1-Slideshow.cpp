@@ -15,7 +15,9 @@
 #include <WiFi.h>
 #include <WiFiManager.h>
 #include <ESPmDNS.h>
+#ifndef TOUCH_CS
 #include <XPT2046_Bitbang.h>
+#endif
 #include <time.h>
 #include "SPIFFS.h"
 #include "app.h"
@@ -26,7 +28,14 @@ volatile bool g_otaActive = false;
 String g_ip;
 
 static QueueHandle_t cmdQueue;
+#ifndef TOUCH_CS
+// Boards with their own touch pins (2.8" CYDs): bit-banged XPT2046.
+// Boards where touch shares the display's SPI bus (3.5" CYD, TOUCH_CS set in the build)
+// use TFT_eSPI's touch support instead: a bit-banged driver would take over the
+// display's SPI pins and freeze the screen.
 static XPT2046_Bitbang ts(XPT2046_MOSI, XPT2046_MISO, XPT2046_CLK, XPT2046_CS);
+#endif
+volatile uint32_t g_restartAt = 0;
 static volatile bool buttonPressed = false;
 static bool servicesStarted = false;
 
@@ -134,6 +143,47 @@ static void handleCommands() {
   }
 }
 
+// ---------------------------------------------------------------- touch hardware
+// True while the screen is touched; x is the horizontal position in screen pixels.
+static bool readTouch(int &x) {
+#ifdef TOUCH_CS
+  uint16_t tx, ty;
+  if (!tft.getTouch(&tx, &ty, 300)) return false;
+  x = tx;
+  return true;
+#else
+  TouchPoint p = ts.getTouch();
+  if (p.zRaw < 400) return false;  // real touches read ~1000-2000
+  x = p.x;
+  return true;
+#endif
+}
+
+// The bit-banged driver has to be re-initialised after sound (see handleInput).
+static void touchReinit() {
+#ifndef TOUCH_CS
+  ts.begin();
+#endif
+}
+
+// Boards using TFT_eSPI touch need a calibration (touch the four corners). It is
+// done once and saved; the web page has a button to do it again.
+static void touchBegin() {
+#ifdef TOUCH_CS
+  uint16_t cal[5];
+  if (!settingsLoadTouchCal(cal)) {
+    displayShowMessage("Touch calibration", "Touch each corner as shown", nullptr, TFT_CYAN);
+    delay(2000);
+    tft.fillScreen(TFT_BLACK);
+    tft.calibrateTouch(cal, TFT_MAGENTA, TFT_BLACK, 20);
+    settingsSaveTouchCal(cal);
+  }
+  tft.setTouch(cal);
+#else
+  ts.begin();
+#endif
+}
+
 // ---------------------------------------------------------------- input
 static void handleInput() {
   static uint32_t lastPoll = 0;
@@ -162,7 +212,7 @@ static void handleInput() {
   if (wasAudio) {
     wasAudio = false;
     audioEnded = now;
-    ts.begin();
+    touchReinit();
   }
   if (now - audioEnded < 1000) return;
 
@@ -171,17 +221,16 @@ static void handleInput() {
   // reading flickers during a press, and a photo change takes ~0.4 s).
   static bool touching = false;
   static uint32_t lastDown = 0;
-  TouchPoint p = ts.getTouch();
-  if (p.zRaw < 400) {  // real touches read ~1000-2000
+  int x = 0;
+  if (!readTouch(x)) {
     if (touching && now - lastDown > 250) touching = false;
     return;
   }
   lastDown = now;
   if (touching || now - lastAction < 500) return;
   touching = true;
-  Serial.printf("[%lu] Touch x=%u y=%u z=%u\n", (unsigned long)now, p.x, p.y, p.zRaw);
+  Serial.println(String("[") + now + "] Touch x=" + x);
 
-  int x = p.x;
 #ifdef TOUCH_FLIP_X
   x = tft.width() - x;
 #endif
@@ -246,6 +295,9 @@ void setup() {
   pinMode(4, OUTPUT); digitalWrite(4, HIGH);
   pinMode(16, OUTPUT); digitalWrite(16, HIGH);
   pinMode(17, OUTPUT); digitalWrite(17, HIGH);
+#ifdef BOARD_CYD35
+  pinMode(22, OUTPUT); digitalWrite(22, HIGH);  // red LED on the 3.5" board
+#endif
 
   settingsLoad();
   displayBegin();
@@ -253,7 +305,6 @@ void setup() {
   displayShowSplash();
   uint32_t splashStart = millis();
 
-  ts.begin();
   storageBegin();
 
   // WiFi. A frame that already knows a network never opens the setup portal
@@ -271,8 +322,9 @@ void setup() {
 
   while (millis() - splashStart < VANITY_MIN_MS) delay(10);
 
+  if (online) startNetworkServices();
+  touchBegin();  // after the network is up: calibration (3.5" board) waits for touches, the web page keeps working
   if (online) {
-    startNetworkServices();
     playlistCount() ? showInfoScreen() : showEmptyScreen();
   } else {
     Serial.println("Offline - slideshow only, will keep trying to reconnect");
@@ -288,6 +340,7 @@ void loop() {
   uint32_t now = millis();
 
   if (servicesStarted) webLoop();
+  if (g_restartAt && (int32_t)(now - g_restartAt) >= 0) ESP.restart();
 
   if (g_otaActive) {
     wasOta = true;

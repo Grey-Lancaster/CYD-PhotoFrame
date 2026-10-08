@@ -26,6 +26,7 @@ button:hover,.btn:hover{background:var(--acc2)}
 button.alt,.btn.alt{background:#363b46}button.alt:hover{background:#444a57}
 button.bad{background:var(--bad)}
 button:disabled{opacity:.4;cursor:default}
+[hidden]{display:none!important}
 #drop{border:2px dashed #3b414d;border-radius:10px;padding:16px;text-align:center;color:var(--mut)}
 #drop.over{border-color:var(--acc);background:#1b2a1d}
 #drop label.opt{display:inline-block;margin:6px 10px 0}
@@ -88,6 +89,7 @@ details{margin-top:12px;color:var(--mut);font-size:13px}
     <label>Screen brightness <span id="bv"></span><input type="range" id="bright" min="5" max="100"></label>
     <label>Sound volume <span id="vv"></span><input type="range" id="volume" min="0" max="100"></label>
     <label class="chk"><input type="checkbox" id="shuffle"> Shuffle order</label>
+    <label class="chk"><input type="checkbox" id="invert"> Invert colours (use if photos look like a negative)</label>
     <label class="chk"><input type="checkbox" id="swaprb"> Swap red and blue (use if photo colours look wrong)</label>
     <label class="chk"><input type="checkbox" id="sndup"> Play the sound when a file is uploaded</label>
     <label class="chk"><input type="checkbox" id="night"> Turn screen off at night</label>
@@ -123,7 +125,7 @@ details{margin-top:12px;color:var(--mut);font-size:13px}
 <section class="card">
   <h2>System</h2>
   <dl id="sys"></dl>
-  <div class="row"><a class="btn alt" href="/update">Firmware update</a></div>
+  <div class="row"><a class="btn alt" href="/update">Firmware update</a><button id="recal" class="alt" hidden>Recalibrate touch</button></div>
   <details><summary>About</summary>
     <p>CYD PhotoFrame by Grey Lancaster, built with help from ChatGPT and Claude, and the open-source community:
     WiFiManager, ESPAsyncWebServer, TFT_eSPI, XPT2046_Bitbang, SdFat, JPEGDEC, QRCode, ESP8266Audio and ElegantOTA.</p>
@@ -146,7 +148,7 @@ function fmtUp(s){const d=Math.floor(s/86400),h=Math.floor(s%86400/3600),m=Math.
 
 function fillSettings(s){
   $('#speed').value=s.speed;$('#bright').value=s.bright;$('#volume').value=s.volume;
-  $('#shuffle').checked=s.shuffle;$('#swaprb').checked=s.swaprb;$('#sndup').checked=s.sndup;$('#night').checked=s.night;
+  $('#shuffle').checked=s.shuffle;$('#swaprb').checked=s.swaprb;$('#invert').checked=s.invert;$('#sndup').checked=s.sndup;$('#night').checked=s.night;
   $('#nstart').value=s.nstart;$('#nend').value=s.nend;
   const tz=$('#tz');if(![...tz.options].some(o=>o.value===s.tz))tz.add(new Option(s.tz,s.tz));tz.value=s.tz;
   $('#bv').textContent=s.bright+'%';$('#vv').textContent=s.volume+'%';
@@ -162,6 +164,7 @@ async function loadStatus(){
   document.querySelectorAll('.th').forEach(t=>t.classList.toggle('cur',t.dataset.n===st.cur));
   if(!dirty)fillSettings(st.s);
   $('#audioinfo').textContent=st.audio?('Sound file: '+st.audio+(st.audioBusy?' (playing)':'')):'No sound file on the SD card. Upload a WAV or MP3.';
+  $('#recal').hidden=!st.touchcal;
   $('#play').disabled=!st.audio||st.audioBusy;$('#delaudio').disabled=!st.audio;
   $('#sys').innerHTML='';
   const rows=[['Address',st.ip+' / '+st.host+'.local'],['WiFi signal',st.rssi+' dBm'],['Free memory',Math.round(st.heap/1024)+' KB'],['Uptime',fmtUp(st.up)],['SD card',st.sd?'OK':'not found'],['Clock',st.time||'not set (night mode needs internet)']];
@@ -195,13 +198,14 @@ $('#delsel').onclick=async()=>{
   loadImages();loadStatus();
 };
 $('#play').onclick=()=>post('/api/play').then(loadStatus).catch(e=>toast(e.message));
+$('#recal').onclick=async()=>{if(confirm('Restart the frame and calibrate the touch screen again?')){try{await post('/api/recal');toast('Restarting - touch the corners shown on the frame')}catch(e){toast(e.message)}}};
 $('#delaudio').onclick=async()=>{if(confirm('Remove the sound file?')){try{await post('/api/delete',{n:st.audio})}catch(e){toast(e.message)}loadStatus()}};
 
 document.querySelectorAll('#sf input,#sf select').forEach(e=>e.oninput=()=>{dirty=true;$('#bv').textContent=$('#bright').value+'%';$('#vv').textContent=$('#volume').value+'%'});
 $('#save').onclick=async()=>{
   try{
     await post('/api/settings',{speed:$('#speed').value,bright:$('#bright').value,volume:$('#volume').value,
-      shuffle:$('#shuffle').checked?1:0,swaprb:$('#swaprb').checked?1:0,sndup:$('#sndup').checked?1:0,night:$('#night').checked?1:0,
+      shuffle:$('#shuffle').checked?1:0,swaprb:$('#swaprb').checked?1:0,invert:$('#invert').checked?1:0,sndup:$('#sndup').checked?1:0,night:$('#night').checked?1:0,
       nstart:$('#nstart').value,nend:$('#nend').value,tz:$('#tz').value});
     dirty=false;toast('Saved');loadStatus();
   }catch(e){toast(e.message)}

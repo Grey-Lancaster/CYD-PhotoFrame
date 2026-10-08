@@ -13,6 +13,7 @@ void settingsLoad() {
   settings.volume = constrain(prefs.getUChar("volume", settings.volume), 0, 100);
   settings.soundOnUpload = prefs.getBool("sndUp", settings.soundOnUpload);
   settings.swapRB = prefs.getBool("swapRB", settings.swapRB);
+  settings.invert = prefs.getBool("invert", settings.invert);
   settings.nightEnabled = prefs.getBool("night", settings.nightEnabled);
   settings.nightStart = prefs.getUChar("nStart", settings.nightStart) % 24;
   settings.nightEnd = prefs.getUChar("nEnd", settings.nightEnd) % 24;
@@ -29,9 +30,29 @@ void settingsSave() {
   prefs.putUChar("volume", settings.volume);
   prefs.putBool("sndUp", settings.soundOnUpload);
   prefs.putBool("swapRB", settings.swapRB);
+  prefs.putBool("invert", settings.invert);
   prefs.putBool("night", settings.nightEnabled);
   prefs.putUChar("nStart", settings.nightStart);
   prefs.putUChar("nEnd", settings.nightEnd);
   prefs.putString("tz", settings.tz);
+  prefs.end();
+}
+
+bool settingsLoadTouchCal(uint16_t cal[5]) {
+  prefs.begin("frame", true);
+  size_t n = prefs.getBytes("tcal", cal, 5 * sizeof(uint16_t));
+  prefs.end();
+  return n == 5 * sizeof(uint16_t);
+}
+
+void settingsSaveTouchCal(const uint16_t cal[5]) {
+  prefs.begin("frame", false);
+  prefs.putBytes("tcal", cal, 5 * sizeof(uint16_t));
+  prefs.end();
+}
+
+void settingsClearTouchCal() {
+  prefs.begin("frame", false);
+  prefs.remove("tcal");
   prefs.end();
 }

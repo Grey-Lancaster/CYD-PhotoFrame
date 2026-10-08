@@ -31,6 +31,7 @@ struct Settings {
   uint8_t volume = 50;         // percent
   bool soundOnUpload = true;
   bool swapRB = false;         // swap red/blue (panel colour order)
+  bool invert = false;         // flip the build's colour inversion (photos look like a negative)
   bool nightEnabled = false;
   uint8_t nightStart = 22;     // hour (local) the screen turns off
   uint8_t nightEnd = 7;        // hour (local) the screen turns on
@@ -39,6 +40,9 @@ struct Settings {
 extern Settings settings;
 void settingsLoad();
 void settingsSave();
+bool settingsLoadTouchCal(uint16_t cal[5]);        // TFT_eSPI touch calibration (builds with TOUCH_CS)
+void settingsSaveTouchCal(const uint16_t cal[5]);
+void settingsClearTouchCal();
 
 // ---------------------------------------------------------------- storage (SD card + playlist)
 // All SD access, the image list and the playlist position are protected by
@@ -80,6 +84,7 @@ void uploadAbort();
 // ---------------------------------------------------------------- display
 extern TFT_eSPI tft;
 void displayBegin();
+void displayApplyInversion();                  // applies settings.invert
 void displayApplyColorOrder();                 // applies settings.swapRB
 void displaySetBrightness(uint8_t percent);   // 0 turns the backlight off
 void displayShowSplash();
@@ -110,5 +115,6 @@ bool cmdSend(CmdType type, const char *name = nullptr);
 extern volatile bool g_paused;
 extern volatile bool g_night;
 extern volatile bool g_otaActive;
+extern volatile uint32_t g_restartAt;           // millis() deadline for a requested restart (0 = none)
 extern String g_ip;
 void applyTimezone();
