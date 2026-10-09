@@ -80,12 +80,11 @@ jobs:
             | **1. CYD** | `cyd` | ILI9341, normal colours: the standard CYD and many "2 USB" boards. **Try this first.** |
             | **2. CYD2** | `cyd2usb` | ST7789: "2 USB" boards with an ST7789 display |
             | **3. CYD2 alternate** | `cyd2b` | ILI9341, inverted colours |
-            | *(no button yet)* | `cyd35` | 3.5" CYD, ST7796 480×320 (experimental, see below) |
+            | **4. 3.5" CYD** | `cyd35` | ST7796 480×320: the 3.5-inch CYD (touch calibration on first start) |
 
             Wrong button = white screen or a negative picture. Nothing is damaged, just try another one.
             If only the colours are off, you don't need another file: open the frame's web page, go to
             *Settings* and tick **Swap red and blue** (reds look blue) or **Invert colours** (negative picture).
-            The 3.5" CYD isn't in the installer yet; use the files below for it.
 
             ## Files in this release
 
@@ -104,7 +103,7 @@ jobs:
               display's SPI pins, which froze the display in earlier versions (issue #3). Touch now goes
               through TFT_eSPI, with a one-time four-corner calibration on first start (and a
               *Recalibrate touch* button in the web page's System panel).
-              **Experimental, please report on issue #3.** Easiest: upload
+              Confirmed working on a real 3.5" board (issue #3). Flash it with installer button 4, or upload
               `CYD-PhotoFrame-cyd35-update.bin` on the `/update` page of a frame that is already on WiFi.
             - **New setting: Invert colours** (*Settings*), next to *Swap red and blue*.
 
