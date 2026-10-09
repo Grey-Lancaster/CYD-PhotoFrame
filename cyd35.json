@@ -1,0 +1,16 @@
+{
+  "name": "CYD PhotoFrame 4.2 (3.5-inch, ST7796)",
+  "version": "4.2.0",
+  "builds": [
+    {
+      "chipFamily": "ESP32",
+      "improv": false,
+      "parts": [
+        {
+          "path": "cyd35.bin",
+          "offset": 0
+        }
+      ]
+    }
+  ]
+}
