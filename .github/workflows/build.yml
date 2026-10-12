@@ -11,6 +11,7 @@ permissions:
 
 jobs:
   build:
+    name: build (${{ matrix.env }})   # short job names; the matrix entries carry the per-board image settings too
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
