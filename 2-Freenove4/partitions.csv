@@ -1,0 +1,11 @@
+# Freenove FNK0104S 4.0" ESP32-S3 (16 MB flash). Two OTA app slots for the /update page,
+# and a small SPIFFS (splash image + favicon) so the installer's merged image stays small
+# (about 6 MB instead of the 13 MB the stock 16 MB table would need). The rest of the flash is unused.
+# (The coredump partition sits after the end of the installer's merged image, so it adds nothing to its size.)
+# Name,   Type, SubType, Offset,  Size,     Flags
+nvs,      data, nvs,     0x9000,  0x5000,
+otadata,  data, ota,     0xe000,  0x2000,
+app0,     app,  ota_0,   0x10000, 0x280000,
+app1,     app,  ota_1,   0x290000,0x280000,
+spiffs,   data, spiffs,  0x510000,0x100000,
+coredump, data, coredump,0x610000,0x10000,

@@ -15,7 +15,15 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        env: [cyd, cyd2usb, cyd2b, cyd35]
+        # Per-board image layout: chip, where the bootloader goes, the flash options and
+        # where the SPIFFS image goes (these match each build's partition table).
+        include:
+          - {env: cyd,       chip: esp32,   boot: "0x1000", flash: "--flash_mode dio --flash_freq 40m --flash_size 4MB", fs: "0x3D0000"}
+          - {env: cyd2usb,   chip: esp32,   boot: "0x1000", flash: "--flash_mode dio --flash_freq 40m --flash_size 4MB", fs: "0x3D0000"}
+          - {env: cyd2b,     chip: esp32,   boot: "0x1000", flash: "--flash_mode dio --flash_freq 40m --flash_size 4MB", fs: "0x3D0000"}
+          - {env: cyd35,     chip: esp32,   boot: "0x1000", flash: "--flash_mode dio --flash_freq 40m --flash_size 4MB", fs: "0x3D0000"}
+          # Freenove 4.0" ESP32-S3: bootloader at 0x0, DIO (QIO hangs the ROM), 2-Freenove4/partitions.csv
+          - {env: freenove4, chip: esp32s3, boot: "0x0",    flash: "--flash_mode dio --flash_size 16MB",                fs: "0x510000"}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
@@ -38,13 +46,14 @@ jobs:
           pio run -e ${{ matrix.env }} -t buildfs      # this wipes $B/*.bin, so parts/ was copied first
           cp $B/spiffs.bin parts/
           BOOT=$(find ~/.platformio/packages/framework-arduinoespressif32 -name boot_app0.bin | head -1)
-          # Offsets match min_spiffs.csv. The merged file is flashed at offset 0
-          # (web installer / esptool); the update file is for the /update page.
-          esptool.py --chip esp32 merge_bin \
+          # Offsets match each board's partition table (min_spiffs.csv for the CYDs,
+          # 2-Freenove4/partitions.csv for the Freenove). The merged file is flashed at
+          # offset 0 (web installer / esptool); the update file is for the /update page.
+          esptool.py --chip ${{ matrix.chip }} merge_bin \
             -o dist/CYD-PhotoFrame-${{ matrix.env }}-factory.bin \
-            --flash_mode dio --flash_freq 40m --flash_size 4MB \
-            0x1000 parts/bootloader.bin 0x8000 parts/partitions.bin 0xe000 "$BOOT" \
-            0x10000 parts/firmware.bin 0x3D0000 parts/spiffs.bin
+            ${{ matrix.flash }} \
+            ${{ matrix.boot }} parts/bootloader.bin 0x8000 parts/partitions.bin 0xe000 "$BOOT" \
+            0x10000 parts/firmware.bin ${{ matrix.fs }} parts/spiffs.bin
           cp parts/firmware.bin dist/CYD-PhotoFrame-${{ matrix.env }}-update.bin
           ls -l dist
 
@@ -81,6 +90,7 @@ jobs:
             | **2. CYD2** | `cyd2usb` | ST7789: "2 USB" boards with an ST7789 display |
             | **3. CYD2 alternate** | `cyd2b` | ILI9341, inverted colours |
             | **4. 3.5" CYD** | `cyd35` | ST7796 480×320: the 3.5-inch CYD (touch calibration on first start) |
+            | **5. Freenove 4" S3** | `freenove4` | Freenove FNK0104S 4.0-inch ESP32-S3 display, ST7796 480×320, capacitive touch (WiFi is set up on its own screen) |
 
             Wrong button = white screen or a negative picture. Nothing is damaged, just try another one.
             If only the colours are off, you don't need another file: open the frame's web page, go to
