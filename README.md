@@ -1,6 +1,6 @@
 # CYD PhotoFrame
 
-> **About this branch:** `gh-pages` hosts the [web installer](https://grey-lancaster.github.io/CYD-PhotoFrame/) (`index.html`, the three manifest `.json` files and the factory images they flash). The source code is on the [`main` branch](https://github.com/Grey-Lancaster/CYD-PhotoFrame), and every build is on the [Releases page](https://github.com/Grey-Lancaster/CYD-PhotoFrame/releases). The images here are the **v4.2** release:
+> **About this branch:** `gh-pages` hosts the [web installer](https://grey-lancaster.github.io/CYD-PhotoFrame/) (`index.html`, the manifest `.json` files and the factory images they flash). The source code is on the [`main` branch](https://github.com/Grey-Lancaster/CYD-PhotoFrame), and every build is on the [Releases page](https://github.com/Grey-Lancaster/CYD-PhotoFrame/releases). The images here are the **v4.2** release:
 >
 > | File | Build |
 > | --- | --- |
@@ -8,8 +8,9 @@
 > | `firmware2.bin` | `cyd2usb` (ST7789) |
 > | `CYD2bPhotoFrame.bin` | `cyd2b` (ILI9341, inverted colours) |
 > | `cyd35.bin` | `cyd35` (3.5" CYD, ST7796 480×320) |
+> | `freenove4.bin` | `freenove4` (Freenove 4.0" ESP32-S3, ST7796 480×320) |
 
-A photo frame for the ESP32 **"Cheap Yellow Display" (CYD)** — a ~$15 board with a 320×240 touch screen, SD card slot and speaker. Photos live on the SD card, and you manage everything from your phone or PC through a built-in web page.
+A photo frame for the ESP32 **"Cheap Yellow Display" (CYD)** — a ~$15 board with a 320×240 touch screen, SD card slot and speaker. Photos live on the SD card, and you manage everything from your phone or PC through a built-in web page. It also runs on the **Freenove 4.0" ESP32-S3 display** (see [below](#freenove-40-esp32-s3)).
 
 ## ⚡ Easiest way to install
 
@@ -26,6 +27,7 @@ Plug the frame into your computer with a USB cable, click a button, done — no 
   | **2. CYD2** | `cyd2usb` | ST7789 ("2 USB" boards with an ST7789 display) |
   | **3. CYD2 alternate** | `cyd2b` | ILI9341, inverted colours |
   | **4. 3.5" CYD** | `cyd35` | ST7796 480×320: the 3.5-inch CYD (see [below](#35-cyd)) |
+  | **5. Freenove 4" S3** | `freenove4` | Freenove FNK0104S 4.0-inch ESP32-S3, ST7796 480×320, capacitive touch (see [below](#freenove-40-esp32-s3)) |
 
   Only the colours off? You don't need another file: in the frame's web page, *Settings*, tick **Swap red and blue** or **Invert colours**.
 - Installing from the page replaces everything on the board, so you'll set up WiFi again. Photos on the SD card are not touched.
@@ -40,6 +42,7 @@ pio run -e cyd -t upload          # standard CYD (ILI9341)
 pio run -e cyd2usb -t upload      # CYD with 2 USB ports (ST7789)
 pio run -e cyd2b -t upload        # CYD "2B" variant (inverted colours)
 pio run -e cyd35 -t upload        # 3.5" CYD, ST7796 480x320 (see below)
+pio run -e freenove4 -t upload      # Freenove 4.0" ESP32-S3, ST7796 480x320 (see below)
 pio run -e cyd -t uploadfs        # splash image + favicon (data/ folder), once
 ```
 
@@ -52,11 +55,24 @@ The `cyd35` build is for the 3.5-inch CYD (ESP32-3248S035, ST7796 480×320, resi
 - **Tested** on the ESP32-32E 3.5" board (ST7796 + XPT2046) by a user, see [issue #3](https://github.com/Grey-Lancaster/CYD-PhotoFrame/issues/3): slideshow, touch, colours, QR code and the web page all work. Other 3.5" boards with different pins would need their own settings in `platformio.ini`; reports are welcome.
 - Sound has not been tested on this board yet.
 
+## Freenove 4.0" ESP32-S3
+
+The `freenove4` build is for the **Freenove FNK0104S** 4.0-inch display board: ESP32-S3 with 16 MB flash and 8 MB PSRAM, ST7796 480×320 screen, **capacitive** touch, an SD card slot (4-bit SDMMC) and a speaker driven by an ES8311 audio codec. It has the same web page and photo handling as the CYD builds, with these differences:
+
+- **WiFi is set up on the frame's own screen.** There is no `ESP32_AP` hotspot. On first start (or after holding BOOT while powering on) the frame lists the networks it can see: tap yours and type the password on the on-screen keyboard. It remembers several networks. This uses [TouchWifiProvisioner](https://github.com/Grey-Lancaster/TouchWifiProvisioner).
+- **Touch is capacitive.** Use a finger; a plastic (resistive-style) stylus will not register. No calibration is needed.
+- **Photos fill the 480×320 screen.** Small photos are enlarged as well as large ones shrunk (the CYD builds never enlarge). The web page's upload resize targets 480×320; tick *Crop to fill* to fill the whole screen, otherwise black bars keep the photo's shape.
+- **Sound** plays through the on-board codec: upload `music.wav` or `music.mp3` as on the CYD. Uploads are checked by their real format, so an M4A renamed to `.mp3` is refused with an explanation instead of playing silence.
+- **Installing:** use installer button **5**. Use the board's USB port; if the computer or installer can't find it, hold the BOOT button while plugging it in. Installing replaces the saved WiFi, as on the CYD.
+- **Web updates:** `/update` works as on the CYD; upload `CYD-PhotoFrame-freenove4-update.bin` from a release.
+- Built and tested on the FNK0104S 4.0-inch board. Freenove's other sizes (2.8", 3.5") use different displays and pins and would need their own build.
+
+
 ## First start
 
 1. Put a FAT32 SD card with a few `.jpg` photos in the slot (or add them later from the web page).
 2. Power the frame. It shows the splash screen, then tries your saved WiFi.
-3. First time only: connect your phone/PC to the WiFi network **`ESP32_AP`**, open **192.168.4.1** and choose your network.
+3. First time only: connect your phone/PC to the WiFi network **`ESP32_AP`**, open **192.168.4.1** and choose your network. (On the Freenove 4.0" board there is no hotspot: pick your network on the frame's own touch screen instead.)
 4. The screen shows the frame's address and a QR code. Open it in a browser (or use **http://photoframe.local**).
 
 The frame keeps working without WiFi (it just shows the slideshow) and reconnects by itself when the network is back.
@@ -71,6 +87,8 @@ To pick a different WiFi network later, **hold the BOOT button while powering on
 | Touch middle | Show IP address + QR code |
 
 If left and right feel reversed on your board, uncomment `TOUCH_FLIP_X` in `1-Slideshow/app.h`.
+
+On the Freenove board touch is capacitive: use a finger, not a plastic stylus.
 
 ## Web interface
 
@@ -91,7 +109,7 @@ There is no password on the web interface — keep the frame on a network you tr
 
 ## Hardware
 
-Designed for the CYD ESP32-2432S028 family: ILI9341 (or ST7789) 320×240 display, XPT2046 touch, SD slot, speaker on GPIO26, backlight on GPIO21.
+Designed for the CYD ESP32-2432S028 family: ILI9341 (or ST7789) 320×240 display, XPT2046 touch, SD slot, speaker on GPIO26, backlight on GPIO21. The `freenove4` build is for the Freenove FNK0104S 4.0-inch ESP32-S3 display board (see above).
 
 You can buy the board on [Amazon](https://amzn.to/3UVQwrV) (under $20) — or search for "ESP32-2432S028" / "Cheap Yellow Display" on AliExpress (about $13, 2-week shipping).
 
@@ -101,6 +119,7 @@ You can buy the board on [Amazon](https://amzn.to/3UVQwrV) (under $20) — or se
 - **Is it crashing or restarting?** Open the web page: the *System* panel shows **Last restart** (power on, crash, watchdog, brownout). "Brownout" or random "Power on" usually means a weak USB cable or port. A built-in watchdog restarts the frame if it ever hangs.
 - **Photos look like a negative** — in the web page's *Settings* tick **Invert colours**.
 - **Red and blue swapped (reds look blue)** — panels of the same type are wired differently. Open the web page, go to *Settings* and tick **Swap red and blue**, then *Save settings*. It applies immediately and is remembered.
+- **Freenove: blank screen, and the computer keeps detecting/losing the USB port every few seconds** - the board was flashed in QIO flash mode. Reflash with the installer (or a `freenove4` build, which is set to DIO).
 - **"No SD card"** — re-seat the card; the frame retries every few seconds. FAT32 only.
 - **"Cannot show photos"** — all photos failed to decode (progressive/corrupt JPEG). Re-upload them through the web page.
 - **Build fails with a framework error** — the project is pinned to `espressif32@6.10.0` (Arduino-ESP32 2.x). Newer platform releases use Arduino-ESP32 3.x, which this code doesn't support.
@@ -118,11 +137,15 @@ You can buy the board on [Amazon](https://amzn.to/3UVQwrV) (under $20) — or se
 | `web.cpp`, `web_assets.h` | web server, JSON API, the single-page UI |
 | `settings.cpp` | settings saved in flash |
 
-GitHub Actions builds all three boards on every push and keeps the `.bin` files as artifacts.
+The Freenove build has its own folder, `2-Freenove4/`, because its hardware differs from the CYDs: SD card over SDMMC instead of SPI, capacitive touch (`touch.cpp`), an I2S audio codec (`audio.cpp`, `es8311.*`), PSRAM-backed photo scaling (`display.cpp`) and an on-device WiFi picker (`wifi_setup.cpp`). The web server, web page and settings files are copies of the CYD ones. Its partition table is `2-Freenove4/partitions.csv` (two OTA app slots and a small SPIFFS), and flash mode must stay **DIO**: with QIO the ROM bootloader hangs and the board reboots every few seconds.
+
+GitHub Actions builds every board on every push and keeps the `.bin` files as artifacts.
 
 ## Credits
 
 Created by **Grey Lancaster** with help from ChatGPT, Claude and the open-source community. Built on WiFiManager, ESPAsyncWebServer, TFT_eSPI, XPT2046_Bitbang, SdFat, JPEGDEC, QRCode, ESP8266Audio and ElegantOTA — thank you to their authors.
+
+The Freenove build also uses TouchWifiProvisioner, LVGL, the FT6336U library and Espressif's ES8311 driver.
 
 ## License
 
