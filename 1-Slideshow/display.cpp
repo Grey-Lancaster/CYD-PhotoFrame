@@ -67,36 +67,31 @@ void displayBegin() {
   displayApplyInversion();
 }
 
-bool displayCanRotate() {
+uint8_t displayRotationSteps() {
 #ifdef BOARD_CYD35
-  return true;
+  return 4;
 #else
-  return false;
+  return 2;  // 2.8" boards: 0 and 180 (USB on the left or right); portrait is only offered on the 3.5"
 #endif
 }
 
 // Setting 0 is the landscape orientation the frame always had (TFT_eSPI rotation 3);
-// 1..3 turn it on in 90 degree steps. Only the 3.5" board offers this; the others stay fixed.
+// 1..3 turn it on in 90 degree steps. The 2.8" boards only do 0 and 2 (180 degrees).
 void displayApplyRotation() {
-#ifdef BOARD_CYD35
+  if (displayRotationSteps() == 2) settings.rotation &= 2;
   tft.setRotation((3 + settings.rotation) & 3);
-#else
-  tft.setRotation(3);
-#endif
 }
 
 // The rotation's MADCTL value as TFT_eSPI sets it, with the panel's red/blue order
 // optionally flipped. Some panels of the same controller type are wired the other way
 // round, so this is a setting instead of a build option.
 void displayApplyColorOrder() {
-#if defined(BOARD_CYD35)  // ST7796
+#if defined(ST7789_DRIVER)
+  static const uint8_t baseFor[4] = {0, TFT_MAD_MX | TFT_MAD_MV, TFT_MAD_MX | TFT_MAD_MY, TFT_MAD_MV | TFT_MAD_MY};
+#else  // ILI9341 family and the 3.5" ST7796
   static const uint8_t baseFor[4] = {TFT_MAD_MX, TFT_MAD_MV, TFT_MAD_MY, TFT_MAD_MX | TFT_MAD_MY | TFT_MAD_MV};
-  const uint8_t base = baseFor[tft.getRotation() & 3];
-#elif defined(ST7789_DRIVER)
-  const uint8_t base = TFT_MAD_MV | TFT_MAD_MY;
-#else  // ILI9341 family
-  const uint8_t base = TFT_MAD_MX | TFT_MAD_MY | TFT_MAD_MV;
 #endif
+  const uint8_t base = baseFor[tft.getRotation() & 3];
   const uint8_t order = settings.swapRB ? (TFT_MAD_COLOR_ORDER ^ TFT_MAD_BGR) : TFT_MAD_COLOR_ORDER;
   tft.writecommand(TFT_MADCTL);
   tft.writedata(base | order);

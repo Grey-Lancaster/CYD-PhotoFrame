@@ -5,7 +5,7 @@
 #include <TFT_eSPI.h>
 #include <functional>
 
-#define FW_VERSION "4.4-beta2"
+#define FW_VERSION "4.4-beta3"
 #define HOSTNAME "photoframe"
 
 // ---------------------------------------------------------------- pins (FNK0104S 4.0" ESP32-S3 display)
@@ -43,6 +43,7 @@ struct Settings {
   bool soundOnUpload = true;
   bool swapRB = false;         // swap red/blue (panel colour order)
   bool invert = false;         // flip the build's colour inversion (photos look like a negative)
+  uint8_t rotation = 0;        // 0..3 = 0/90/180/270 degrees; 0 is landscape with USB on the left, as before
   bool nightEnabled = false;
   uint8_t nightStart = 22;     // hour (local) the screen turns off
   uint8_t nightEnd = 7;        // hour (local) the screen turns on
@@ -97,6 +98,8 @@ extern TFT_eSPI tft;
 void displayBegin();
 void displayApplyInversion();                  // applies settings.invert
 void displayApplyColorOrder();                 // applies settings.swapRB
+void displayApplyRotation();                   // applies settings.rotation
+uint8_t displayRotationSteps();                // 4: all four rotations
 void displaySetBrightness(uint8_t percent);   // 0 turns the backlight off
 void displayShowSplash();
 void displayShowMessage(const char *title, const char *line1 = nullptr, const char *line2 = nullptr, uint16_t color = TFT_WHITE);
@@ -106,7 +109,7 @@ bool displayPhoto(const String &name);        // false if it could not be decode
 
 // ---------------------------------------------------------------- touch (FT6336U)
 void touchBegin();
-bool touchRead(int &x, int &y);               // screen pixels, landscape with USB on the left
+bool touchRead(int &x, int &y);               // screen pixels, in the current rotation
 bool i2cLock(uint32_t timeoutMs);             // shared I2C bus (touch + audio codec)
 void i2cUnlock();
 

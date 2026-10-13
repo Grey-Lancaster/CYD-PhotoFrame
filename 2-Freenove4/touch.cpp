@@ -1,6 +1,5 @@
 // FT6336U capacitive touch (I2C). The controller reports portrait coordinates
-// (x 0..319, y 0..479); the display runs in rotation 3 (landscape, USB on the left),
-// so screenX = 479 - rawY and screenY = rawX. Verified by drawing under a finger.
+// (x 0..319, y 0..479); the screen position depends on the rotation, see touchReadLocked().
 //
 // The FT6336U library is only used for its reset/init sequence. Its scan() puts a
 // 10 ms delay inside every register read (~100 ms per touch read), which makes quick
@@ -53,7 +52,15 @@ static bool touchReadLocked(int &x, int &y) {
   if (status == 0 || status > 2) return false;
   int rawX = ((xh & 0x0F) << 8) | xl;
   int rawY = ((yh & 0x0F) << 8) | yl;
-  x = constrain(tft.width() - 1 - rawY, 0, tft.width() - 1);
-  y = constrain(rawX, 0, tft.height() - 1);
+  // raw is the panel's portrait frame (x 0..319, y 0..479). Verified by eye in the two landscape
+  // rotations; the portrait ones follow from the same MADCTL flags (to be confirmed on the board).
+  switch (tft.getRotation() & 3) {
+    case 3: x = 479 - rawY; y = rawX; break;         // USB on the left (setting 0)
+    case 0: x = rawX; y = rawY; break;               // portrait (setting 1)
+    case 1: x = rawY; y = 319 - rawX; break;         // USB on the right (setting 2)
+    default: x = 319 - rawX; y = 479 - rawY; break;  // portrait, turned over (setting 3)
+  }
+  x = constrain(x, 0, tft.width() - 1);
+  y = constrain(y, 0, tft.height() - 1);
   return true;
 }

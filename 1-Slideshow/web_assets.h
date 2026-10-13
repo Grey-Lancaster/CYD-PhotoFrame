@@ -93,7 +93,7 @@ details{margin-top:12px;color:var(--mut);font-size:13px}
     <label class="chk"><input type="checkbox" id="swaprb"> Swap red and blue (use if photo colours look wrong)</label>
     <label id="rotl" hidden>Screen rotation<select id="rot">
       <option value="0">0&deg; (landscape)</option><option value="1">90&deg;</option><option value="2">180&deg;</option><option value="3">270&deg;</option>
-    </select><small>The frame restarts when this changes. The first time you use an orientation it asks you to touch the corners to calibrate the touch screen.</small></label>
+    </select><small>Turns the picture, for example to put the USB port on the other side. The frame restarts when this changes.</small></label>
     <label class="chk"><input type="checkbox" id="sndup"> Play the sound when a file is uploaded</label>
     <label class="chk"><input type="checkbox" id="night"> Turn screen off at night</label>
     <label>Off from<select id="nstart"></select></label>
@@ -149,9 +149,14 @@ for(let h=0;h<24;h++){const o=(h%12||12)+(h<12?' AM':' PM')+(h==0?' (midnight)':
 
 function fmtUp(s){const d=Math.floor(s/86400),h=Math.floor(s%86400/3600),m=Math.floor(s%3600/60);return (d?d+'d ':'')+h+'h '+m+'m'}
 
+function fillRot(s){
+  const n=s.rotn||4;[...$('#rot').options].forEach(o=>{o.hidden=o.disabled=(n==2&&(o.value&1)==1)});
+  if(s.rot!==undefined){$('#rotl').hidden=false;$('#rot').value=s.rot}
+}
+
 function fillSettings(s){
   $('#speed').value=s.speed;$('#bright').value=s.bright;$('#volume').value=s.volume;
-  $('#shuffle').checked=s.shuffle;$('#swaprb').checked=s.swaprb;$('#rotl').hidden=s.rot===undefined;if(s.rot!==undefined)$('#rot').value=s.rot;$('#invert').checked=s.invert;$('#sndup').checked=s.sndup;$('#night').checked=s.night;
+  $('#shuffle').checked=s.shuffle;$('#swaprb').checked=s.swaprb;fillRot(s);$('#invert').checked=s.invert;$('#sndup').checked=s.sndup;$('#night').checked=s.night;
   $('#nstart').value=s.nstart;$('#nend').value=s.nend;
   const tz=$('#tz');if(![...tz.options].some(o=>o.value===s.tz))tz.add(new Option(s.tz,s.tz));tz.value=s.tz;
   $('#bv').textContent=s.bright+'%';$('#vv').textContent=s.volume+'%';
@@ -208,7 +213,7 @@ document.querySelectorAll('#sf input,#sf select').forEach(e=>e.oninput=()=>{dirt
 $('#save').onclick=async()=>{
   try{
     await post('/api/settings',{speed:$('#speed').value,bright:$('#bright').value,volume:$('#volume').value,
-      shuffle:$('#shuffle').checked?1:0,swaprb:$('#swaprb').checked?1:0,rot:$('#rotl').hidden?'':$('#rot').value,invert:$('#invert').checked?1:0,sndup:$('#sndup').checked?1:0,night:$('#night').checked?1:0,
+      shuffle:$('#shuffle').checked?1:0,swaprb:$('#swaprb').checked?1:0,rot:$('#rot').value,invert:$('#invert').checked?1:0,sndup:$('#sndup').checked?1:0,night:$('#night').checked?1:0,
       nstart:$('#nstart').value,nend:$('#nend').value,tz:$('#tz').value});
     dirty=false;toast('Saved');loadStatus();
   }catch(e){toast(e.message)}

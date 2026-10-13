@@ -14,6 +14,7 @@ void settingsLoad() {
   settings.soundOnUpload = prefs.getBool("sndUp", settings.soundOnUpload);
   settings.swapRB = prefs.getBool("swapRB", settings.swapRB);
   settings.invert = prefs.getBool("invert", settings.invert);
+  settings.rotation = prefs.getUChar("rot", settings.rotation) & 3;
   settings.nightEnabled = prefs.getBool("night", settings.nightEnabled);
   settings.nightStart = prefs.getUChar("nStart", settings.nightStart) % 24;
   settings.nightEnd = prefs.getUChar("nEnd", settings.nightEnd) % 24;
@@ -31,6 +32,7 @@ void settingsSave() {
   prefs.putBool("sndUp", settings.soundOnUpload);
   prefs.putBool("swapRB", settings.swapRB);
   prefs.putBool("invert", settings.invert);
+  prefs.putUChar("rot", settings.rotation);
   prefs.putBool("night", settings.nightEnabled);
   prefs.putUChar("nStart", settings.nightStart);
   prefs.putUChar("nEnd", settings.nightEnd);

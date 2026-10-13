@@ -105,16 +105,17 @@ jobs:
             - **`*-update.bin`**: firmware only, for a frame that is already running: open
               `http://photoframe.local/update` and upload it. Keeps your WiFi login and settings.
 
-            ## What's new in 4.4-beta2
+            ## What's new in 4.4-beta3
 
-            - **Screen rotation on the 3.5-inch board (`cyd35`):** a new *Screen rotation* setting on the web
-              page offers 0, 90, 180 and 270 degrees (0 is the usual landscape). The frame restarts when you
-              change it, and the first time you use an orientation it asks you to touch the corners to
-              calibrate the touch screen (each rotation remembers its own calibration). In portrait the
-              info/QR screen puts the QR code under the text.
-            - **Testers wanted (josemrvrz):** please try each rotation on a real 3.5" board and report which
-              way 90 turns, whether touch left/right and the colours are right, and how the on-screen WiFi
-              picker looks in portrait (not checked yet). Other boards are unchanged and have no rotation setting.
+            - **Screen rotation setting on the web page** (*Screen rotation*; the frame restarts when you change it):
+              - **3.5-inch (`cyd35`) and Freenove 4-inch:** 0, 90, 180 and 270 degrees (0 is the usual landscape).
+              - **2.8-inch boards (`cyd`, `cyd2usb`, `cyd2b`):** 0 and 180 only, e.g. to put the USB port on the other side.
+              - The 3.5-inch board asks you to touch the corners the first time you use a new orientation (each
+                orientation keeps its own calibration). The 2.8-inch boards and the Freenove need no extra calibration.
+              - In portrait the info/QR screen puts the QR code under the text.
+            - **Testers wanted:** please try each rotation on your board and report which way 90 turns, whether touch
+              left/right and the colours are right, and how the on-screen WiFi picker looks in portrait (not checked yet).
+              Hardware-tested so far: `cyd2usb`. Portrait on the Freenove and 3.5-inch boards is calculated, not yet seen.
 
             ## What's new in 4.4
 

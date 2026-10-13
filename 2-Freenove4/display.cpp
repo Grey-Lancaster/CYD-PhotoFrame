@@ -43,7 +43,7 @@ static void fadeTo(uint8_t target) {
 // ---------------------------------------------------------------- setup
 void displayBegin() {
   tft.init();
-  tft.setRotation(3);  // landscape, USB connector on the left
+  displayApplyRotation();
   displayApplyColorOrder();
   displayApplyInversion();
   tft.fillScreen(TFT_BLACK);
@@ -54,10 +54,21 @@ void displayBegin() {
   displaySetBrightness(settings.brightness);
 }
 
-// Rotation 3 as TFT_eSPI sets it for the ST7796, with the panel's red/blue order
-// optionally flipped (a setting instead of a build option).
+uint8_t displayRotationSteps() {
+  return 4;
+}
+
+// Setting 0 is the landscape orientation the frame always had (TFT_eSPI rotation 3, USB
+// connector on the left); 1..3 turn it on in 90 degree steps.
+void displayApplyRotation() {
+  tft.setRotation((3 + settings.rotation) & 3);
+}
+
+// The rotation's MADCTL value as TFT_eSPI sets it for the ST7796, with the panel's red/blue
+// order optionally flipped (a setting instead of a build option).
 void displayApplyColorOrder() {
-  const uint8_t base = TFT_MAD_MX | TFT_MAD_MY | TFT_MAD_MV;
+  static const uint8_t baseFor[4] = {TFT_MAD_MX, TFT_MAD_MV, TFT_MAD_MY, TFT_MAD_MX | TFT_MAD_MY | TFT_MAD_MV};
+  const uint8_t base = baseFor[tft.getRotation() & 3];
   const uint8_t order = settings.swapRB ? (TFT_MAD_COLOR_ORDER ^ TFT_MAD_BGR) : TFT_MAD_COLOR_ORDER;
   tft.writecommand(TFT_MADCTL);
   tft.writedata(base | order);
@@ -257,8 +268,10 @@ void displayShowInfo(const String &ip) {
   tft.setTextColor(TFT_GREEN, TFT_BLACK);
   tft.drawString(HOSTNAME ".local", 16, 162, 4);
   tft.setTextColor(TFT_DARKGREY, TFT_BLACK);
-  tft.drawString("Touch left/right: prev/next", 16, 262, 2);
-  tft.drawString("Touch middle: this screen", 16, 284, 2);
+  const bool portrait = tft.height() > tft.width();
+  const int hintY = portrait ? 420 : 262;  // portrait: the QR code goes between the text and the hints
+  tft.drawString("Touch left/right: prev/next", 16, hintY, 2);
+  tft.drawString("Touch middle: this screen", 16, hintY + 22, 2);
 
   if (ip.length() == 0) return;
   String url = "http://" + ip;
@@ -268,8 +281,8 @@ void displayShowInfo(const String &ip) {
   const int block = 5;
   const int quiet = 4;
   int side = qr.size * block + 2 * quiet;
-  int x0 = tft.width() - side - 12;
-  int y0 = 70;
+  int x0 = portrait ? (tft.width() - side) / 2 : tft.width() - side - 12;
+  int y0 = portrait ? 220 : 70;
   tft.fillRect(x0, y0, side, side, TFT_WHITE);
   for (int y = 0; y < qr.size; y++)
     for (int x = 0; x < qr.size; x++)
@@ -282,10 +295,10 @@ void displayShowOta(const char *line, int percent) {
     tft.fillScreen(TFT_BLACK);
     centered("Firmware update", 70, 4, TFT_CYAN);
     centered("Do not power off", 190, 2, TFT_WHITE);
-    tft.drawRect(60, 130, 360, 28, TFT_WHITE);
+    tft.drawRect(60, 130, tft.width() - 120, 28, TFT_WHITE);
   }
   if (percent >= 0) {
-    tft.fillRect(62, 132, (356 * percent) / 100, 24, TFT_GREEN);
+    tft.fillRect(62, 132, ((tft.width() - 124) * percent) / 100, 24, TFT_GREEN);
   }
   if (line) {
     tft.fillRect(0, 240, tft.width(), 30, TFT_BLACK);
