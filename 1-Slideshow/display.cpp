@@ -264,17 +264,6 @@ void displayShowSplash() {
   }
 }
 
-void displayShowApInstructions() {
-  tft.fillScreen(TFT_BLACK);
-  centered("WiFi setup", 12, 4, TFT_CYAN);
-  centered("1. Connect your phone or PC", 60, 2, TFT_WHITE);
-  centered("to the WiFi network", 82, 2, TFT_WHITE);
-  centered("ESP32_AP", 108, 4, TFT_GREEN);
-  centered("2. Open your browser at", 150, 2, TFT_WHITE);
-  centered("192.168.4.1", 174, 4, TFT_GREEN);
-  centered("Skips to the slideshow after 3 min", 218, 2, TFT_DARKGREY);
-}
-
 void displayShowInfo(const String &ip) {
   tft.fillScreen(TFT_BLACK);
   tft.setTextDatum(TL_DATUM);

@@ -51,8 +51,22 @@ void settingsSaveTouchCal(const uint16_t cal[5]) {
   prefs.end();
 }
 
+bool settingsLoadTouchAff(float m[6]) {
+  prefs.begin("frame", true);
+  size_t n = prefs.getBytes("taff", m, 6 * sizeof(float));
+  prefs.end();
+  return n == 6 * sizeof(float);
+}
+
+void settingsSaveTouchAff(const float m[6]) {
+  prefs.begin("frame", false);
+  prefs.putBytes("taff", m, 6 * sizeof(float));
+  prefs.end();
+}
+
 void settingsClearTouchCal() {
   prefs.begin("frame", false);
   prefs.remove("tcal");
+  prefs.remove("taff");
   prefs.end();
 }

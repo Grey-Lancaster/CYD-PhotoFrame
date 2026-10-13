@@ -3,6 +3,7 @@
 
 #include <Arduino.h>
 #include <TFT_eSPI.h>
+#include <functional>
 
 #define FW_VERSION "4.3"
 #define HOSTNAME "photoframe"
@@ -18,6 +19,14 @@
 
 // Flip if left/right touch zones feel reversed on your board.
 // #define TOUCH_FLIP_X
+
+// Raw touch range -> screen, used only by the WiFi picker on the 2.8" boards.
+#ifndef PICKER_RAW_X0
+#define PICKER_RAW_X0 200
+#define PICKER_RAW_X1 3700
+#define PICKER_RAW_Y0 240
+#define PICKER_RAW_Y1 3800
+#endif
 
 // ---------------------------------------------------------------- timing
 #define VANITY_MIN_MS 3000   // minimum time the splash is shown
@@ -42,7 +51,9 @@ void settingsLoad();
 void settingsSave();
 bool settingsLoadTouchCal(uint16_t cal[5]);        // TFT_eSPI touch calibration (builds with TOUCH_CS)
 void settingsSaveTouchCal(const uint16_t cal[5]);
-void settingsClearTouchCal();
+void settingsClearTouchCal();                      // clears both kinds
+bool settingsLoadTouchAff(float m[6]);             // 2.8" boards: raw touch -> screen transform
+void settingsSaveTouchAff(const float m[6]);
 
 // ---------------------------------------------------------------- storage (SD card + playlist)
 // All SD access, the image list and the playlist position are protected by
@@ -89,7 +100,6 @@ void displayApplyColorOrder();                 // applies settings.swapRB
 void displaySetBrightness(uint8_t percent);   // 0 turns the backlight off
 void displayShowSplash();
 void displayShowMessage(const char *title, const char *line1 = nullptr, const char *line2 = nullptr, uint16_t color = TFT_WHITE);
-void displayShowApInstructions();
 void displayShowInfo(const String &ip);
 void displayShowOta(const char *line, int percent);
 bool displayPhoto(const String &name);        // false if it could not be decoded
@@ -119,3 +129,10 @@ extern volatile uint32_t g_restartAt;           // millis() deadline for a reque
 extern String g_ip;
 extern String g_resetReason;                  // why the frame last restarted (power on, crash, watchdog...)
 void applyTimezone();
+
+// ---------------------------------------------------------------- WiFi setup (wifi_setup.cpp, TouchWifiProvisioner)
+void wifiSetupBegin(const char *hostname, std::function<void(const String &ip)> onConnected);
+void wifiSetupLoop();
+void wifiSetupReset();       // forget all saved networks and show the picker
+bool wifiHasSavedNetworks();
+bool touchReadXY(int &x, int &y);  // screen position of the current touch (1-Slideshow.cpp)

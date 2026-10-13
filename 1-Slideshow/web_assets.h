@@ -128,7 +128,7 @@ details{margin-top:12px;color:var(--mut);font-size:13px}
   <div class="row"><a class="btn alt" href="/update">Firmware update</a><button id="recal" class="alt" hidden>Recalibrate touch</button></div>
   <details><summary>About</summary>
     <p>CYD PhotoFrame by Grey Lancaster, built with help from ChatGPT and Claude, and the open-source community:
-    WiFiManager, ESPAsyncWebServer, TFT_eSPI, XPT2046_Bitbang, SdFat, JPEGDEC, QRCode, ESP8266Audio and ElegantOTA.</p>
+    TouchWifiProvisioner, LVGL, ESPAsyncWebServer, TFT_eSPI, XPT2046_Bitbang, SdFat, JPEGDEC, QRCode, ESP8266Audio and ElegantOTA.</p>
   </details>
 </section>
 </main>

@@ -89,9 +89,7 @@ static String statusJson() {
   out += String(",\"shuffle\":") + (settings.shuffle ? "true" : "false");
   out += String(",\"swaprb\":") + (settings.swapRB ? "true" : "false");
   out += String(",\"invert\":") + (settings.invert ? "true" : "false");
-#ifdef TOUCH_CS
   out += ",\"touchcal\":true";
-#endif
   out += String(",\"sndup\":") + (settings.soundOnUpload ? "true" : "false");
   out += String(",\"night\":") + (settings.nightEnabled ? "true" : "false");
   out += ",\"nstart\":" + String(settings.nightStart);
@@ -225,13 +223,11 @@ static void setupRoutes() {
     else sendError(r, 500, "Some files could not be deleted");
   });
 
-#ifdef TOUCH_CS
   server.on("/api/recal", HTTP_POST, [](AsyncWebServerRequest *r) {
-    settingsClearTouchCal();  // the frame asks for the four corners again after the restart
+    settingsClearTouchCal();  // the frame asks for the calibration touches again after the restart
     g_restartAt = millis() + 600;
     sendJson(r, 200, "{\"ok\":true}");
   });
-#endif
 
   server.on("/api/play", HTTP_POST, [](AsyncWebServerRequest *r) {
     if (audioPlay()) sendJson(r, 200, "{\"ok\":true}");

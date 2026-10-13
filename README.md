@@ -40,7 +40,7 @@ pio run -e cyd -t uploadfs        # splash image + favicon (data/ folder), once
 
 The `cyd35` build is for the 3.5-inch CYD (ESP32-3248S035, ST7796 480×320, resistive touch). It differs from the 2.8" boards in two ways: the backlight is on GPIO27, and the touch controller shares the display's SPI pins, so touch is handled by TFT_eSPI (a bit-banged driver would take over the display's pins and freeze the screen).
 
-- **Touch calibration:** the first time it starts, the frame asks you to touch four corners. It is saved; the web page's *System* panel has a **Recalibrate touch** button.
+- **Touch calibration:** the first time it starts, the frame asks you to touch four corners (the 2.8" boards ask for five crosshairs). It is saved; the web page's *System* panel has a **Recalibrate touch** button.
 - **Colours look wrong?** In *Settings* try **Swap red and blue** and/or **Invert colours**; they apply immediately.
 - **Tested** on the ESP32-32E 3.5" board (ST7796 + XPT2046) by a user, see [issue #3](https://github.com/Grey-Lancaster/CYD-PhotoFrame/issues/3): slideshow, touch, colours, QR code and the web page all work. Other 3.5" boards with different pins would need their own settings in `platformio.ini`; reports are welcome.
 - Sound has not been tested on this board yet.
@@ -62,11 +62,12 @@ The `freenove4` build is for the **Freenove FNK0104S** 4.0-inch display board: E
 
 1. Put a FAT32 SD card with a few `.jpg` photos in the slot (or add them later from the web page).
 2. Power the frame. It shows the splash screen, then tries your saved WiFi.
-3. First time only: connect your phone/PC to the WiFi network **`ESP32_AP`**, open **192.168.4.1** and choose your network. (On the Freenove 4.0" board there is no hotspot: pick your network on the frame's own touch screen instead.)
+3. First time only: the 2.8" and 3.5" CYDs ask you to calibrate the touch screen (touch the crosshairs as they appear; it is saved). Then the frame lists the WiFi networks it can see on its own screen: tap yours and type the password on the on-screen keyboard. There is no `ESP32_AP` hotspot any more.
 4. The screen shows the frame's address and a QR code. Open it in a browser (or use **http://photoframe.local**).
 
 The frame keeps working without WiFi (it just shows the slideshow) and reconnects by itself when the network is back.
-To pick a different WiFi network later, **hold the BOOT button while powering on**.
+To pick a different WiFi network later, **hold the BOOT button while powering on**. The frame remembers several networks and joins the strongest one it knows. A frame updated from 4.3 or older keeps its saved WiFi.
+If nobody touches a frame that has no WiFi saved for 3 minutes, it starts the slideshow without WiFi.
 
 ## Touch and buttons
 
@@ -120,7 +121,8 @@ You can buy the board on [Amazon](https://amzn.to/3UVQwrV) (under $20) — or se
 
 | File | Purpose |
 | --- | --- |
-| `1-Slideshow.cpp` | setup / loop, touch, night mode, WiFi |
+| `1-Slideshow.cpp` | setup / loop, touch (and its calibration), night mode |
+| `wifi_setup.cpp` | on-screen WiFi picker (TouchWifiProvisioner on LVGL) |
 | `storage.cpp` | SD card, photo list & playlist, uploads, deletes (one mutex guards all SD access) |
 | `display.cpp` | backlight, status screens, JPEG decode |
 | `audio.cpp` | WAV / MP3 playback |
@@ -133,9 +135,9 @@ GitHub Actions builds every board on every push and keeps the `.bin` files as ar
 
 ## Credits
 
-Created by **Grey Lancaster** with help from ChatGPT, Claude and the open-source community. Built on WiFiManager, ESPAsyncWebServer, TFT_eSPI, XPT2046_Bitbang, SdFat, JPEGDEC, QRCode, ESP8266Audio and ElegantOTA — thank you to their authors.
+Created by **Grey Lancaster** with help from ChatGPT, Claude and the open-source community. Built on TouchWifiProvisioner, LVGL, ESPAsyncWebServer, TFT_eSPI, SdFat, JPEGDEC, QRCode, ESP8266Audio and ElegantOTA — thank you to their authors.
 
-The Freenove build also uses TouchWifiProvisioner, LVGL, the FT6336U library and Espressif's ES8311 driver.
+The Freenove build also uses the FT6336U library and Espressif's ES8311 driver.
 
 ## License
 
