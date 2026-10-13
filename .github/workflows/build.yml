@@ -114,8 +114,8 @@ jobs:
               their real format, so a renamed M4A is refused instead of playing silence. Flash it with
               installer button 5, or upload `CYD-PhotoFrame-freenove4-update.bin` on the `/update` page of a
               frame that is already running. Use a finger: the screen ignores a plastic stylus.
-            - **The CYD firmware is unchanged from 4.2** apart from the version number, so installer
-              buttons 1-4 still flash the 4.2 images. Confirmed working on the 3.5-inch CYD (issue #3).
+            - **The CYD firmware is unchanged from 4.2** apart from the version number. Installer
+              buttons 1-5 all flash 4.3. Confirmed working on the 3.5-inch CYD (issue #3).
 
             ## What's new in 4.2
 
