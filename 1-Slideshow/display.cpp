@@ -39,7 +39,7 @@ static void fadeTo(uint8_t target) {
 // ---------------------------------------------------------------- setup
 void displayBegin() {
   tft.init();
-  tft.setRotation(3);
+  displayApplyRotation();
   displayApplyColorOrder();
   displayApplyInversion();
   tft.fillScreen(TFT_BLACK);
@@ -62,16 +62,37 @@ void displayBegin() {
   // Read after the display is fully set up, then restore the rotation/colour order the
   // read-back sequence may have touched.
   Serial.printf("Display ID: RDDID=0x%06X ID4=0x%06X\n", (unsigned)tft.readcommand32(0x04) >> 8, (unsigned)tft.readcommand32(0xD3) & 0xFFFFFF);
-  tft.setRotation(3);
+  displayApplyRotation();
   displayApplyColorOrder();
   displayApplyInversion();
 }
 
-// Rotation 3 as TFT_eSPI sets it, with the panel's red/blue order optionally flipped.
-// Some panels of the same controller type are wired the other way round, so this is a
-// setting instead of a build option.
+bool displayCanRotate() {
+#ifdef BOARD_CYD35
+  return true;
+#else
+  return false;
+#endif
+}
+
+// Setting 0 is the landscape orientation the frame always had (TFT_eSPI rotation 3);
+// 1..3 turn it on in 90 degree steps. Only the 3.5" board offers this; the others stay fixed.
+void displayApplyRotation() {
+#ifdef BOARD_CYD35
+  tft.setRotation((3 + settings.rotation) & 3);
+#else
+  tft.setRotation(3);
+#endif
+}
+
+// The rotation's MADCTL value as TFT_eSPI sets it, with the panel's red/blue order
+// optionally flipped. Some panels of the same controller type are wired the other way
+// round, so this is a setting instead of a build option.
 void displayApplyColorOrder() {
-#if defined(ST7789_DRIVER)
+#if defined(BOARD_CYD35)  // ST7796
+  static const uint8_t baseFor[4] = {TFT_MAD_MX, TFT_MAD_MV, TFT_MAD_MY, TFT_MAD_MX | TFT_MAD_MY | TFT_MAD_MV};
+  const uint8_t base = baseFor[tft.getRotation() & 3];
+#elif defined(ST7789_DRIVER)
   const uint8_t base = TFT_MAD_MV | TFT_MAD_MY;
 #else  // ILI9341 family
   const uint8_t base = TFT_MAD_MX | TFT_MAD_MY | TFT_MAD_MV;
@@ -289,8 +310,9 @@ void displayShowInfo(const String &ip) {
   const int block = 4;
   const int quiet = 4;
   int side = qr.size * block + 2 * quiet;
-  int x0 = tft.width() - side - 4;
-  int y0 = 56;
+  const bool portrait = tft.height() > tft.width();
+  int x0 = portrait ? (tft.width() - side) / 2 : tft.width() - side - 4;
+  int y0 = portrait ? 250 : 56;
   tft.fillRect(x0, y0, side, side, TFT_WHITE);
   for (int y = 0; y < qr.size; y++)
     for (int x = 0; x < qr.size; x++)

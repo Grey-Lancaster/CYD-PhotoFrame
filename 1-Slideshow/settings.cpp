@@ -14,6 +14,7 @@ void settingsLoad() {
   settings.soundOnUpload = prefs.getBool("sndUp", settings.soundOnUpload);
   settings.swapRB = prefs.getBool("swapRB", settings.swapRB);
   settings.invert = prefs.getBool("invert", settings.invert);
+  settings.rotation = prefs.getUChar("rot", settings.rotation) & 3;
   settings.nightEnabled = prefs.getBool("night", settings.nightEnabled);
   settings.nightStart = prefs.getUChar("nStart", settings.nightStart) % 24;
   settings.nightEnd = prefs.getUChar("nEnd", settings.nightEnd) % 24;
@@ -31,6 +32,7 @@ void settingsSave() {
   prefs.putBool("sndUp", settings.soundOnUpload);
   prefs.putBool("swapRB", settings.swapRB);
   prefs.putBool("invert", settings.invert);
+  prefs.putUChar("rot", settings.rotation);
   prefs.putBool("night", settings.nightEnabled);
   prefs.putUChar("nStart", settings.nightStart);
   prefs.putUChar("nEnd", settings.nightEnd);
@@ -38,16 +40,22 @@ void settingsSave() {
   prefs.end();
 }
 
-bool settingsLoadTouchCal(uint16_t cal[5]) {
+// The touch calibration depends on the screen rotation, so each rotation keeps its own.
+// Rotation 0 uses the original key, so frames calibrated before rotation existed keep theirs.
+static String calKey(uint8_t rotation) {
+  return rotation ? String("tcal") + rotation : String("tcal");
+}
+
+bool settingsLoadTouchCal(uint8_t rotation, uint16_t cal[5]) {
   prefs.begin("frame", true);
-  size_t n = prefs.getBytes("tcal", cal, 5 * sizeof(uint16_t));
+  size_t n = prefs.getBytes(calKey(rotation).c_str(), cal, 5 * sizeof(uint16_t));
   prefs.end();
   return n == 5 * sizeof(uint16_t);
 }
 
-void settingsSaveTouchCal(const uint16_t cal[5]) {
+void settingsSaveTouchCal(uint8_t rotation, const uint16_t cal[5]) {
   prefs.begin("frame", false);
-  prefs.putBytes("tcal", cal, 5 * sizeof(uint16_t));
+  prefs.putBytes(calKey(rotation).c_str(), cal, 5 * sizeof(uint16_t));
   prefs.end();
 }
 
@@ -66,7 +74,7 @@ void settingsSaveTouchAff(const float m[6]) {
 
 void settingsClearTouchCal() {
   prefs.begin("frame", false);
-  prefs.remove("tcal");
+  for (uint8_t r = 0; r < 4; r++) prefs.remove(calKey(r).c_str());
   prefs.remove("taff");
   prefs.end();
 }

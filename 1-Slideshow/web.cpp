@@ -89,6 +89,7 @@ static String statusJson() {
   out += String(",\"shuffle\":") + (settings.shuffle ? "true" : "false");
   out += String(",\"swaprb\":") + (settings.swapRB ? "true" : "false");
   out += String(",\"invert\":") + (settings.invert ? "true" : "false");
+  if (displayCanRotate()) out += ",\"rot\":" + String(settings.rotation);
   out += ",\"touchcal\":true";
   out += String(",\"sndup\":") + (settings.soundOnUpload ? "true" : "false");
   out += String(",\"night\":") + (settings.nightEnabled ? "true" : "false");
@@ -189,6 +190,8 @@ static void setupRoutes() {
     bool invertBefore = settings.invert;
     if ((v = param(r, "invert")).length()) settings.invert = v.toInt() != 0;
     if ((v = param(r, "swaprb")).length()) settings.swapRB = v.toInt() != 0;
+    uint8_t rotBefore = settings.rotation;
+    if (displayCanRotate() && (v = param(r, "rot")).length()) settings.rotation = constrain(v.toInt(), 0, 3);
     if ((v = param(r, "night")).length()) settings.nightEnabled = v.toInt() != 0;
     if ((v = param(r, "nstart")).length()) settings.nightStart = constrain(v.toInt(), 0, 23);
     if ((v = param(r, "nend")).length()) settings.nightEnd = constrain(v.toInt(), 0, 23);
@@ -203,6 +206,7 @@ static void setupRoutes() {
       if (playlistCurrent(cur)) cmdSend(CMD_SHOW, cur.c_str());  // redraw with the new colour order
     }
     if (shuffleBefore != settings.shuffle) playlistRescan();
+    if (rotBefore != settings.rotation) g_restartAt = millis() + 600;  // starts again in the new orientation (asks for touch calibration if this one has none yet)
     sendJson(r, 200, "{\"ok\":true}");
   });
 

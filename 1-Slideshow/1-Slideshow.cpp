@@ -385,12 +385,12 @@ static void touchReinit() {
 static void touchBegin() {
 #ifdef TOUCH_CS
   uint16_t cal[5];
-  if (!settingsLoadTouchCal(cal)) {
+  if (!settingsLoadTouchCal(settings.rotation, cal)) {
     displayShowMessage("Touch calibration", "Touch each corner as shown", nullptr, TFT_CYAN);
     delay(2000);
     tft.fillScreen(TFT_BLACK);
     tft.calibrateTouch(cal, TFT_MAGENTA, TFT_BLACK, 20);
-    settingsSaveTouchCal(cal);
+    settingsSaveTouchCal(settings.rotation, cal);
   }
   tft.setTouch(cal);
 #else

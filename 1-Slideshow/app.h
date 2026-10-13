@@ -41,6 +41,7 @@ struct Settings {
   bool soundOnUpload = true;
   bool swapRB = false;         // swap red/blue (panel colour order)
   bool invert = false;         // flip the build's colour inversion (photos look like a negative)
+  uint8_t rotation = 0;        // 0..3 = 0/90/180/270 degrees (3.5" board only; 0 is landscape, as before)
   bool nightEnabled = false;
   uint8_t nightStart = 22;     // hour (local) the screen turns off
   uint8_t nightEnd = 7;        // hour (local) the screen turns on
@@ -49,8 +50,8 @@ struct Settings {
 extern Settings settings;
 void settingsLoad();
 void settingsSave();
-bool settingsLoadTouchCal(uint16_t cal[5]);        // TFT_eSPI touch calibration (builds with TOUCH_CS)
-void settingsSaveTouchCal(const uint16_t cal[5]);
+bool settingsLoadTouchCal(uint8_t rotation, uint16_t cal[5]);  // TFT_eSPI touch calibration (builds with TOUCH_CS), one per rotation
+void settingsSaveTouchCal(uint8_t rotation, const uint16_t cal[5]);
 void settingsClearTouchCal();                      // clears both kinds
 bool settingsLoadTouchAff(float m[6]);             // 2.8" boards: raw touch -> screen transform
 void settingsSaveTouchAff(const float m[6]);
@@ -97,6 +98,8 @@ extern TFT_eSPI tft;
 void displayBegin();
 void displayApplyInversion();                  // applies settings.invert
 void displayApplyColorOrder();                 // applies settings.swapRB
+void displayApplyRotation();                   // applies settings.rotation (3.5" board; others stay fixed)
+bool displayCanRotate();
 void displaySetBrightness(uint8_t percent);   // 0 turns the backlight off
 void displayShowSplash();
 void displayShowMessage(const char *title, const char *line1 = nullptr, const char *line2 = nullptr, uint16_t color = TFT_WHITE);
