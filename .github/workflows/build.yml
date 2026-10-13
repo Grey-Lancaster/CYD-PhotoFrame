@@ -105,6 +105,22 @@ jobs:
             - **`*-update.bin`**: firmware only, for a frame that is already running: open
               `http://photoframe.local/update` and upload it. Keeps your WiFi login and settings.
 
+            ## What's new in 4.4
+
+            - **WiFi is now set up on the frame's own screen on the CYD boards too** (builds `cyd`, `cyd2usb`,
+              `cyd2b`, `cyd35`), using the same on-screen picker as the Freenove board. The `ESP32_AP` hotspot
+              is gone: tap your network in the list and type the password on the on-screen keyboard. The frame
+              remembers several networks. A frame updated from 4.3 or older keeps its saved WiFi.
+            - **Touch calibration on the 2.8-inch boards:** the first start asks you to touch five crosshairs
+              (the 3.5-inch board keeps its four-corner calibration). The web page's *Recalibrate touch* button
+              now works on every CYD.
+            - **Testers wanted:** this is a pre-release. Hardware-tested so far: `cyd2usb` (ST7789) and `cyd`
+              (ILI9341, touch panel with a fault on one unit). **Not yet tested on real boards:** `cyd35` and `cyd2b`.
+              The web installer still flashes 4.3; to try this version, upload the `*-update.bin` for your
+              build on the frame's `/update` page, or flash the `*-factory.bin` with esptool.
+              Reports are welcome in the issues.
+            - The Freenove 4-inch firmware is unchanged apart from the version number.
+
             ## What's new in 4.3
 
             - **New board: Freenove FNK0104S 4.0-inch ESP32-S3** (installer button 5, build `freenove4`):
