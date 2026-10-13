@@ -4,7 +4,7 @@
 #include <Arduino.h>
 #include <TFT_eSPI.h>
 
-#define FW_VERSION "4.3-beta1"
+#define FW_VERSION "4.3"
 #define HOSTNAME "photoframe"
 
 // ---------------------------------------------------------------- pins
