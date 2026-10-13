@@ -105,6 +105,17 @@ jobs:
             - **`*-update.bin`**: firmware only, for a frame that is already running: open
               `http://photoframe.local/update` and upload it. Keeps your WiFi login and settings.
 
+            ## What's new in 4.4-beta2
+
+            - **Screen rotation on the 3.5-inch board (`cyd35`):** a new *Screen rotation* setting on the web
+              page offers 0, 90, 180 and 270 degrees (0 is the usual landscape). The frame restarts when you
+              change it, and the first time you use an orientation it asks you to touch the corners to
+              calibrate the touch screen (each rotation remembers its own calibration). In portrait the
+              info/QR screen puts the QR code under the text.
+            - **Testers wanted (josemrvrz):** please try each rotation on a real 3.5" board and report which
+              way 90 turns, whether touch left/right and the colours are right, and how the on-screen WiFi
+              picker looks in portrait (not checked yet). Other boards are unchanged and have no rotation setting.
+
             ## What's new in 4.4
 
             - **WiFi is now set up on the frame's own screen on the CYD boards too** (builds `cyd`, `cyd2usb`,
