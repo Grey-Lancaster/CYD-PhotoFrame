@@ -6,7 +6,7 @@
 #include <functional>
 
 #define FW_VERSION "4.5.1"
-#define HOSTNAME "photoframe"
+#define HOSTNAME "photoframe4"  // not "photoframe", so a 4" and a CYD can run side by side
 
 // ---------------------------------------------------------------- pins (FNK0104S 4.0" ESP32-S3 display)
 // Display pins are set in platformio.ini (TFT_eSPI build flags).

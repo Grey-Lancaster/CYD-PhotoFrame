@@ -4,7 +4,7 @@
     - slideshow of JPEGs from the SD card (small photos are enlarged, large ones scaled down)
     - web interface: upload (with in-browser resize), delete, settings, live preview
     - touch: left/right = previous/next, middle = show IP + QR code
-    - on-device WiFi setup (TouchWifiProvisioner), mDNS (photoframe.local), OTA updates, night mode
+    - on-device WiFi setup (TouchWifiProvisioner), mDNS (photoframe4.local), OTA updates, night mode
 
   Ported from CYD-PhotoFrame. Created by Grey Lancaster with help from ChatGPT, Claude
   and the open-source community.

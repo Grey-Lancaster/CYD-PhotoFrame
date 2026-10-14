@@ -24,6 +24,7 @@
 
 volatile bool g_paused = false;
 volatile bool g_night = false;
+volatile bool g_asleep = false;
 volatile bool g_otaActive = false;
 String g_ip;
 String g_resetReason;
@@ -43,6 +44,7 @@ enum ScreenState { SCREEN_NONE, SCREEN_PHOTO, SCREEN_NO_SD, SCREEN_EMPTY, SCREEN
 static ScreenState screen = SCREEN_NONE;
 static String shownName;
 static uint32_t lastChange = 0;
+static uint32_t lastActivity = 0;  // last motion / touch, for the motion sleep
 static uint32_t infoUntil = 0;
 
 static const char *resetReasonText(esp_reset_reason_t r) {
@@ -408,6 +410,40 @@ static void touchBegin() {
 #endif
 }
 
+// ---------------------------------------------------------------- motion sleep
+static void wakeScreen() {
+  if (!g_asleep) return;
+  g_asleep = false;
+  if (!g_night) displaySetBrightness(settings.brightness);
+  lastChange = millis();
+  lastActivity = millis();
+  Serial.println("Screen wake");
+}
+
+// With motion sensing on, the screen sleeps after motionMin minutes without motion or
+// touch and wakes on either. If sensing is not running (offline, still warming up) the
+// frame counts that as activity, so it never sleeps blind.
+static void updateSleep() {
+  static uint32_t last = 0;
+  uint32_t now = millis();
+  if (now - last < 250) return;
+  last = now;
+  if (!settings.motionEnabled) {
+    wakeScreen();
+    return;
+  }
+  if (!motionReady() || motionDetected()) {
+    lastActivity = now;
+    wakeScreen();
+    return;
+  }
+  if (!g_asleep && now - lastActivity >= (uint32_t)settings.motionMin * 60000UL) {
+    g_asleep = true;
+    displaySetBrightness(0);
+    Serial.println("Screen sleep (no motion)");
+  }
+}
+
 // ---------------------------------------------------------------- input
 static void handleInput() {
   static uint32_t lastPoll = 0;
@@ -418,6 +454,11 @@ static void handleInput() {
 
   if (buttonPressed) {
     buttonPressed = false;
+    lastActivity = now;
+    if (g_asleep) {
+      wakeScreen();
+      return;
+    }
     if (now - lastAction > 300) {
       lastAction = now;
       stepAndShow(1);
@@ -451,8 +492,14 @@ static void handleInput() {
     return;
   }
   lastDown = now;
+  lastActivity = now;
   if (touching || now - lastAction < 500) return;
   touching = true;
+  if (g_asleep) {  // the first touch only wakes the screen
+    wakeScreen();
+    lastAction = millis();
+    return;
+  }
   Serial.println(String("[") + now + "] Touch x=" + x);
 
 #ifdef TOUCH_FLIP_X
@@ -487,7 +534,7 @@ static void updateNight() {
   bool night = inNightWindow();
   if (night != g_night) {
     g_night = night;
-    displaySetBrightness(night ? 0 : settings.brightness);
+    displaySetBrightness(night || g_asleep ? 0 : settings.brightness);
     lastChange = millis();
   }
 }
@@ -555,6 +602,8 @@ void setup() {
   }
   bool online = wifiConnected;
 
+  motionBegin();
+  lastActivity = millis();
   if (online) startNetworkServices();
   if (online) {
     playlistCount() ? showInfoScreen() : showEmptyScreen();
@@ -609,6 +658,7 @@ void loop() {
   }
 
   updateNight();
+  updateSleep();
   handleInput();
   handleCommands();
 
@@ -618,7 +668,7 @@ void loop() {
   now = millis();
   if (screen == SCREEN_INFO) {
     if ((int32_t)(now - infoUntil) >= 0) showCurrentPhoto();
-  } else if (!g_paused && !g_night && !audioBusy() && now - lastChange >= (uint32_t)settings.speedSec * 1000UL) {
+  } else if (!g_paused && !g_night && !g_asleep && !audioBusy() && now - lastChange >= (uint32_t)settings.speedSec * 1000UL) {
     uint16_t n = playlistCount();
     if (n > 1) stepAndShow(1);
     else if (n == 1 && shownName.length() == 0) showCurrentPhoto();

@@ -75,6 +75,10 @@ static String statusJson() {
   out += ",\"cur\":" + jsonString(cur);
   out += String(",\"paused\":") + (g_paused ? "true" : "false");
   out += String(",\"night\":") + (g_night ? "true" : "false");
+  out += String(",\"asleep\":") + (g_asleep ? "true" : "false");
+  out += String(",\"mon\":") + (motionDetected() ? "true" : "false");
+  out += String(",\"mready\":") + (motionReady() ? "true" : "false");
+  out += ",\"mscore\":" + String(motionScore(), 2);
   out += ",\"audio\":" + jsonString(storageAudioFile().substring(1));
   out += String(",\"audioBusy\":") + (audioBusy() ? "true" : "false");
   out += String(",\"sd\":") + (storageReady() ? "true" : "false");
@@ -98,6 +102,9 @@ static String statusJson() {
   out += String(",\"night\":") + (settings.nightEnabled ? "true" : "false");
   out += ",\"nstart\":" + String(settings.nightStart);
   out += ",\"nend\":" + String(settings.nightEnd);
+  out += String(",\"motion\":") + (settings.motionEnabled ? "true" : "false");
+  out += ",\"mmin\":" + String(settings.motionMin);
+  out += ",\"msens\":" + String(settings.motionSens);
   out += ",\"tz\":" + jsonString(settings.tz);
   out += "}}";
   return out;
@@ -203,9 +210,12 @@ static void setupRoutes() {
     if ((v = param(r, "night")).length()) settings.nightEnabled = v.toInt() != 0;
     if ((v = param(r, "nstart")).length()) settings.nightStart = constrain(v.toInt(), 0, 23);
     if ((v = param(r, "nend")).length()) settings.nightEnd = constrain(v.toInt(), 0, 23);
+    if ((v = param(r, "motion")).length()) settings.motionEnabled = v.toInt() != 0;
+    if ((v = param(r, "mmin")).length()) settings.motionMin = constrain(v.toInt(), 1, 240);
+    if ((v = param(r, "msens")).length()) settings.motionSens = constrain(v.toInt(), 1, 10);
     if ((v = param(r, "tz")).length() && v.length() < sizeof(settings.tz)) v.toCharArray(settings.tz, sizeof(settings.tz));
     settingsSave();
-    if (!g_night) displaySetBrightness(settings.brightness);
+    if (!g_night && !g_asleep) displaySetBrightness(settings.brightness);
     if (tzBefore != settings.tz) applyTimezone();
     if (invertBefore != settings.invert) displayApplyInversion();
     if (swapBefore != settings.swapRB) {
