@@ -47,6 +47,9 @@ struct Settings {
   bool nightEnabled = false;
   uint8_t nightStart = 22;     // hour (local) the screen turns off
   uint8_t nightEnd = 7;        // hour (local) the screen turns on
+  bool motionEnabled = false;  // Wi-Fi motion sensing: the screen sleeps when nobody is around
+  uint8_t motionMin = 10;      // minutes without motion before the screen sleeps
+  uint8_t motionSens = 5;      // 1 (least) .. 10 (most) sensitive
   char tz[48] = "EST5EDT,M3.2.0,M11.1.0";  // POSIX TZ string
 };
 extern Settings settings;
@@ -120,6 +123,12 @@ void wifiSetupLoop();                         // call every loop() pass until co
 void wifiSetupReset();                        // forget the saved network(s) and show the picker
 bool wifiHasSavedNetworks();
 
+// ---------------------------------------------------------------- motion (motion.cpp)
+void motionBegin();          // starts the sensing task (idle until enabled and online)
+bool motionDetected();       // someone is moving nearby
+bool motionReady();          // sensing is running and warmed up
+float motionScore();         // >= 1 means motion; for tuning
+
 // ---------------------------------------------------------------- audio
 bool audioPlay();                  // false if busy or no sound file
 bool audioBusy();
@@ -140,6 +149,7 @@ bool cmdSend(CmdType type, const char *name = nullptr);
 
 extern volatile bool g_paused;
 extern volatile bool g_night;
+extern volatile bool g_asleep;                  // screen off because nobody is around
 extern volatile bool g_otaActive;
 extern volatile uint32_t g_restartAt;           // millis() deadline for a requested restart (0 = none)
 extern String g_ip;

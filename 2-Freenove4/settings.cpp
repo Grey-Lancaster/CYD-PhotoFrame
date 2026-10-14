@@ -18,6 +18,9 @@ void settingsLoad() {
   settings.nightEnabled = prefs.getBool("night", settings.nightEnabled);
   settings.nightStart = prefs.getUChar("nStart", settings.nightStart) % 24;
   settings.nightEnd = prefs.getUChar("nEnd", settings.nightEnd) % 24;
+  settings.motionEnabled = prefs.getBool("motion", settings.motionEnabled);
+  settings.motionMin = constrain(prefs.getUChar("mMin", settings.motionMin), 1, 240);
+  settings.motionSens = constrain(prefs.getUChar("mSens", settings.motionSens), 1, 10);
   String tz = prefs.getString("tz", settings.tz);
   prefs.end();
   if (tz.length() > 0 && tz.length() < sizeof(settings.tz)) tz.toCharArray(settings.tz, sizeof(settings.tz));
@@ -36,6 +39,9 @@ void settingsSave() {
   prefs.putBool("night", settings.nightEnabled);
   prefs.putUChar("nStart", settings.nightStart);
   prefs.putUChar("nEnd", settings.nightEnd);
+  prefs.putBool("motion", settings.motionEnabled);
+  prefs.putUChar("mMin", settings.motionMin);
+  prefs.putUChar("mSens", settings.motionSens);
   prefs.putString("tz", settings.tz);
   prefs.end();
 }

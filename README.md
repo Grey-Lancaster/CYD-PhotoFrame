@@ -90,7 +90,7 @@ On the Freenove board touch is capacitive: use a finger, not a plastic stylus.
 - **Upload** photos by drag-and-drop (several at once). Photos are **resized in your browser** to fit the screen before they are sent, so you don't need to prepare them. Crop-to-fill or letterbox, your choice.
 - **Delete** photos, with thumbnails.
 - **Settings** (saved on the frame): seconds per photo, shuffle, screen brightness, sound volume, and *night mode* (turn the screen off between two hours; needs WiFi once for the clock).
-- **Motion sleep (experimental, CYD builds only):** the screen turns off after a set number of minutes without anyone around and wakes when someone moves or touches it. It needs no extra hardware: the frame pings the router and watches how people moving change the WiFi signal (CSI). It is experimental: how well it works depends on the room and on where the frame and router sit, and the sensitivity slider (with a live score) is there to tune it. Off by default.
+- **Motion sleep (experimental, all boards):** the screen turns off after a set number of minutes without anyone around and wakes when someone moves or touches it. It needs no extra hardware: the frame pings the router and watches how people moving change the WiFi signal (CSI). It is experimental: how well it works depends on the room and on where the frame and router sit, and the sensitivity slider (with a live score) is there to tune it. Off by default.
 - **Sound**: upload `music.wav` or `music.mp3` and it plays (through the speaker) whenever you upload a photo, or on demand.
 - **Firmware update** at `/update` (ElegantOTA). Upload the `firmware.bin` from a release or from a CI build.
 
@@ -201,7 +201,7 @@ Si nadie toca un marco sin WiFi guardado durante 3 minutos, empieza la presentac
 - **Subir** fotos arrastrándolas (varias a la vez). Se **redimensionan en tu navegador** para ajustarse a la pantalla antes de enviarlas, así que no hace falta prepararlas. Puedes recortar para llenar la pantalla o dejar bandas negras.
 - **Eliminar** fotos, con miniaturas.
 - **Ajustes** (se guardan en el marco): segundos por foto, orden aleatorio, brillo, volumen y *modo nocturno* (apaga la pantalla entre dos horas; necesita WiFi una vez para el reloj).
-- **Apagado por movimiento (experimental, solo en los CYD):** la pantalla se apaga tras unos minutos sin nadie cerca y se enciende cuando alguien se mueve o la toca. No necesita hardware adicional: el marco hace ping al router y observa cómo el movimiento de las personas cambia la señal WiFi (CSI). Es experimental: el resultado depende de la habitación y de dónde estén el marco y el router, y el control de sensibilidad (con un nivel en vivo) sirve para ajustarlo. Desactivado por defecto.
+- **Apagado por movimiento (experimental, todas las placas):** la pantalla se apaga tras unos minutos sin nadie cerca y se enciende cuando alguien se mueve o la toca. No necesita hardware adicional: el marco hace ping al router y observa cómo el movimiento de las personas cambia la señal WiFi (CSI). Es experimental: el resultado depende de la habitación y de dónde estén el marco y el router, y el control de sensibilidad (con un nivel en vivo) sirve para ajustarlo. Desactivado por defecto.
 - **Sonido**: sube `music.wav` o `music.mp3` y suena (por el altavoz) al subir una foto o cuando quieras.
 - **Actualización del firmware** en `/update`. Sube el `firmware.bin` de una versión publicada.
 - **Idioma**: la página aparece en el idioma del marco; el interruptor **EN / ES** de la esquina cambia también el idioma del marco.
