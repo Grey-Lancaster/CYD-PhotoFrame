@@ -163,6 +163,7 @@ function applyLang(){
   document.querySelectorAll('[data-ih]').forEach(e=>e.innerHTML=t(e.dataset.ih));
   $('#lEN').classList.toggle('on',lang==='en');$('#lES').classList.toggle('on',lang==='es');
   fillNight();renderStatus();upd();
+  document.querySelectorAll('.th').forEach(e=>e.title=t('show'));
 }
 async function setLang(l){
   lang=l;applyLang();langBusy=true;
