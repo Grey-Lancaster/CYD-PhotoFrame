@@ -6,6 +6,7 @@
 #include <time.h>
 #include "SPIFFS.h"
 #include "app.h"
+#include <TouchWifiProvisioner.h>
 #include "web_assets.h"
 
 static AsyncWebServer server(80);
@@ -79,6 +80,7 @@ static String statusJson() {
   out += String(",\"sd\":") + (storageReady() ? "true" : "false");
   out += ",\"heap\":" + String(ESP.getFreeHeap());
   out += ",\"rssi\":" + String(WiFi.RSSI());
+  out += String(",\"lang\":\"") + (TouchWifiProvisioner::language() == TouchWifiProvisioner::Language::Spanish ? "es" : "en") + "\"";
   out += ",\"up\":" + String((uint32_t)(millis() / 1000));
   out += ",\"reset\":" + jsonString(g_resetReason);
   out += ",\"time\":" + jsonString(time);
@@ -195,6 +197,8 @@ static void setupRoutes() {
     if ((v = param(r, "swaprb")).length()) settings.swapRB = v.toInt() != 0;
     uint8_t rotBefore = settings.rotation;
     if ((v = param(r, "rot")).length()) settings.rotation = constrain(v.toInt(), 0, 3);
+    if ((v = param(r, "lang")).length())  // the language chosen on the frame's WiFi screen; kept by the library
+      TouchWifiProvisioner::setLanguage(v == "es" ? TouchWifiProvisioner::Language::Spanish : TouchWifiProvisioner::Language::English);
     if ((v = param(r, "night")).length()) settings.nightEnabled = v.toInt() != 0;
     if ((v = param(r, "nstart")).length()) settings.nightStart = constrain(v.toInt(), 0, 23);
     if ((v = param(r, "nend")).length()) settings.nightEnd = constrain(v.toInt(), 0, 23);
