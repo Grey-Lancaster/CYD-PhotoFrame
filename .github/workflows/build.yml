@@ -105,35 +105,29 @@ jobs:
             - **`*-update.bin`**: firmware only, for a frame that is already running: open
               `http://photoframe.local/update` and upload it. Keeps your WiFi login and settings.
 
-            ## What's new in 4.4-beta4
-
-            - **Screen rotation setting on the web page** (*Screen rotation*; the frame restarts when you change it):
-              - **3.5-inch (`cyd35`) and Freenove 4-inch:** 0, 90, 180 and 270 degrees (0 is the usual landscape).
-              - **2.8-inch boards (`cyd`, `cyd2usb`, `cyd2b`):** 0 and 180 only, e.g. to put the USB port on the other side.
-              - The 3.5-inch board asks you to touch the corners the first time you use a new orientation (each
-                orientation keeps its own calibration). The 2.8-inch boards and the Freenove need no extra calibration.
-              - In portrait the info/QR screen puts the QR code under the text.
-            - **Upload resize follows the screen:** the web page's *Resize* option now uses the frame's real size in the
-              current rotation (for example 320×480 in portrait on the 3.5-inch board) instead of a fixed 320×240 or 480×320.
-            - **Testers wanted:** please try each rotation on your board and report which way 90 turns, whether touch
-              left/right and the colours are right, and how the on-screen WiFi picker looks in portrait (not checked yet).
-              Hardware-tested so far: `cyd2usb`. Portrait on the Freenove and 3.5-inch boards is calculated, not yet seen.
-
             ## What's new in 4.4
 
-            - **WiFi is now set up on the frame's own screen on the CYD boards too** (builds `cyd`, `cyd2usb`,
-              `cyd2b`, `cyd35`), using the same on-screen picker as the Freenove board. The `ESP32_AP` hotspot
-              is gone: tap your network in the list and type the password on the on-screen keyboard. The frame
-              remembers several networks. A frame updated from 4.3 or older keeps its saved WiFi.
+            - **Screen rotation** (a setting on the web page; the frame restarts when you change it):
+              - **3.5-inch (`cyd35`) and Freenove 4-inch:** 0, 90, 180 and 270 degrees (0 is the usual landscape),
+                so the frame can stand up for portrait photos or have its USB port on any side.
+              - **2.8-inch boards (`cyd`, `cyd2usb`, `cyd2b`):** 0 and 180 only.
+              - The 3.5-inch board asks you to touch the corners the first time you use a new orientation (each
+                orientation keeps its own calibration). The 2.8-inch boards and the Freenove need no extra calibration.
+              - The web page's upload *Resize* option follows the frame's real size in the current rotation.
+            - **WiFi is set up on the frame's own screen on every board** (the CYD builds now use the same picker as
+              the Freenove). The `ESP32_AP` hotspot is gone: tap your network and type the password on the on-screen
+              keyboard. Hidden networks can be typed in, and the frame remembers several networks and joins the
+              strongest one it knows. A frame updated from 4.3 or older keeps its saved WiFi.
+            - **English and Spanish:** the on-screen setup asks for a language the first time (a frame that
+              already has WiFi saved keeps working as before). Translations may need polishing; reports welcome.
             - **Touch calibration on the 2.8-inch boards:** the first start asks you to touch five crosshairs
-              (the 3.5-inch board keeps its four-corner calibration). The web page's *Recalibrate touch* button
-              now works on every CYD.
-            - **Testers wanted:** this is a pre-release. Hardware-tested so far: `cyd2usb` (ST7789) and `cyd`
-              (ILI9341, touch panel with a fault on one unit). **Not yet tested on real boards:** `cyd35` and `cyd2b`.
-              The web installer still flashes 4.3; to try this version, upload the `*-update.bin` for your
-              build on the frame's `/update` page, or flash the `*-factory.bin` with esptool.
-              Reports are welcome in the issues.
-            - The Freenove 4-inch firmware is unchanged apart from the version number.
+              (the 3.5-inch board keeps its four-corner calibration). *Recalibrate touch* on the web page works
+              on every CYD.
+            - **Tested on real boards:** `cyd2usb`, `cyd` (ILI9341), the 3.5-inch `cyd35` (rotation, portrait photos and
+              the WiFi picker, by a user) and the Freenove 4-inch (all four rotations, swipes, portrait photos, WiFi
+              and language screens). **Not tested on a real board:** `cyd2b`. Reports are welcome in the issues.
+            - Updating a frame that already runs 4.3 or newer: upload the `*-update.bin` for your build on the
+              frame's `/update` page. That keeps the saved WiFi and settings.
 
             ## What's new in 4.3
 

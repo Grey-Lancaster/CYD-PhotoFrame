@@ -62,7 +62,7 @@ The `freenove4` build is for the **Freenove FNK0104S** 4.0-inch display board: E
 
 1. Put a FAT32 SD card with a few `.jpg` photos in the slot (or add them later from the web page).
 2. Power the frame. It shows the splash screen, then tries your saved WiFi.
-3. First time only: the 2.8" and 3.5" CYDs ask you to calibrate the touch screen (touch the crosshairs as they appear; it is saved). Then the frame lists the WiFi networks it can see on its own screen: tap yours and type the password on the on-screen keyboard. There is no `ESP32_AP` hotspot any more.
+3. First time only: the 2.8" and 3.5" CYDs ask you to calibrate the touch screen (touch the crosshairs as they appear; it is saved). Then the frame asks for a **language** (English or Spanish) and lists the WiFi networks it can see on its own screen: tap yours (or choose *Hidden network...* for one that is not listed) and type the password on the on-screen keyboard. There is no `ESP32_AP` hotspot any more.
 4. The screen shows the frame's address and a QR code. Open it in a browser (or use **http://photoframe.local**).
 
 The frame keeps working without WiFi (it just shows the slideshow) and reconnects by itself when the network is back.
@@ -91,6 +91,8 @@ On the Freenove board touch is capacitive: use a finger, not a plastic stylus.
 - **Firmware update** at `/update` (ElegantOTA). Upload the `firmware.bin` from a release or from a CI build.
 
 There is no password on the web interface — keep the frame on a network you trust.
+
+**Screen rotation** (a setting on the web page; the frame restarts when you change it): the 3.5-inch CYD and the Freenove 4-inch offer 0, 90, 180 and 270 degrees, so you can stand them up for portrait photos or put the USB port on any side. The 2.8-inch CYDs offer 0 and 180 only. The 3.5-inch CYD asks you to touch the corners the first time you use each orientation (every orientation keeps its own calibration); the other boards need no extra calibration. In the web page, the *Resize* option for uploads follows the frame's real size in the current rotation, so portrait photos are resized to fill a portrait screen.
 
 ## Photos
 
