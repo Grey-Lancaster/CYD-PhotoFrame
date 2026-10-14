@@ -68,15 +68,11 @@ void displayBegin() {
 }
 
 uint8_t displayRotationSteps() {
-#ifdef BOARD_CYD35
-  return 4;
-#else
-  return 2;  // 2.8" boards: 0 and 180 (USB on the left or right); portrait is only offered on the 3.5"
-#endif
+  return 4;  // every board offers 0, 90, 180 and 270 degrees (the 2.8" boards stand up in portrait too)
 }
 
 // Setting 0 is the landscape orientation the frame always had (TFT_eSPI rotation 3);
-// 1..3 turn it on in 90 degree steps. The 2.8" boards only do 0 and 2 (180 degrees).
+// 1..3 turn it on in 90 degree steps.
 void displayApplyRotation() {
   if (displayRotationSteps() == 2) settings.rotation &= 2;
   tft.setRotation((3 + settings.rotation) & 3);

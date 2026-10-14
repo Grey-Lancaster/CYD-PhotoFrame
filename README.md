@@ -92,7 +92,7 @@ On the Freenove board touch is capacitive: use a finger, not a plastic stylus.
 
 There is no password on the web interface — keep the frame on a network you trust.
 
-**Screen rotation** (a setting on the web page; the frame restarts when you change it): the 3.5-inch CYD and the Freenove 4-inch offer 0, 90, 180 and 270 degrees, so you can stand them up for portrait photos or put the USB port on any side. The 2.8-inch CYDs offer 0 and 180 only. The 3.5-inch CYD asks you to touch the corners the first time you use each orientation (every orientation keeps its own calibration); the other boards need no extra calibration. In the web page, the *Resize* option for uploads follows the frame's real size in the current rotation, so portrait photos are resized to fill a portrait screen.
+**Screen rotation** (a setting on the web page; the frame restarts when you change it): every board offers 0, 90, 180 and 270 degrees, so you can stand the frame up for portrait photos or put the USB port on any side. The CYDs ask you to touch the calibration targets the first time you use each orientation (every orientation keeps its own calibration); the Freenove needs no extra calibration. In the web page, the *Resize* option for uploads follows the frame's real size in the current rotation, so portrait photos are resized to fill a portrait screen.
 
 ## Photos
 

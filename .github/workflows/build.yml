@@ -108,11 +108,10 @@ jobs:
             ## What's new in 4.4
 
             - **Screen rotation** (a setting on the web page; the frame restarts when you change it):
-              - **3.5-inch (`cyd35`) and Freenove 4-inch:** 0, 90, 180 and 270 degrees (0 is the usual landscape),
-                so the frame can stand up for portrait photos or have its USB port on any side.
-              - **2.8-inch boards (`cyd`, `cyd2usb`, `cyd2b`):** 0 and 180 only.
-              - The 3.5-inch board asks you to touch the corners the first time you use a new orientation (each
-                orientation keeps its own calibration). The 2.8-inch boards and the Freenove need no extra calibration.
+              - **Every board:** 0, 90, 180 and 270 degrees (0 is the usual landscape), so the frame can stand up
+                for portrait photos or have its USB port on any side.
+              - The CYD boards ask you to touch the calibration targets the first time you use a new orientation (each
+                orientation keeps its own calibration). The Freenove needs no extra calibration.
               - The web page's upload *Resize* option follows the frame's real size in the current rotation.
             - **WiFi is set up on the frame's own screen on every board** (the CYD builds now use the same picker as
               the Freenove). The `ESP32_AP` hotspot is gone: tap your network and type the password on the on-screen
@@ -125,7 +124,7 @@ jobs:
               on every CYD.
             - **Tested on real boards:** `cyd2usb`, `cyd` (ILI9341), the 3.5-inch `cyd35` (rotation, portrait photos and
               the WiFi picker, by a user) and the Freenove 4-inch (all four rotations, swipes, portrait photos, WiFi
-              and language screens). **Not tested on a real board:** `cyd2b`. Reports are welcome in the issues.
+              and language screens). **Portrait on the 2.8-inch boards is new in this release and has had little testing.** **Not tested on a real board:** `cyd2b`. Reports are welcome in the issues.
             - Updating a frame that already runs 4.3 or newer: upload the `*-update.bin` for your build on the
               frame's `/update` page. That keeps the saved WiFi and settings.
 

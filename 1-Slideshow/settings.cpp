@@ -59,16 +59,20 @@ void settingsSaveTouchCal(uint8_t rotation, const uint16_t cal[5]) {
   prefs.end();
 }
 
+// The 2.8" boards keep one fitted calibration for landscape (rotations 0 and 2: 180 is the same
+// screen turned over) and one for portrait (rotations 1 and 3). The landscape one keeps its old key.
+static const char *affKey() { return (settings.rotation & 1) ? "taff1" : "taff"; }
+
 bool settingsLoadTouchAff(float m[6]) {
   prefs.begin("frame", true);
-  size_t n = prefs.getBytes("taff", m, 6 * sizeof(float));
+  size_t n = prefs.getBytes(affKey(), m, 6 * sizeof(float));
   prefs.end();
   return n == 6 * sizeof(float);
 }
 
 void settingsSaveTouchAff(const float m[6]) {
   prefs.begin("frame", false);
-  prefs.putBytes("taff", m, 6 * sizeof(float));
+  prefs.putBytes(affKey(), m, 6 * sizeof(float));
   prefs.end();
 }
 
@@ -76,5 +80,6 @@ void settingsClearTouchCal() {
   prefs.begin("frame", false);
   for (uint8_t r = 0; r < 4; r++) prefs.remove(calKey(r).c_str());
   prefs.remove("taff");
+  prefs.remove("taff1");
   prefs.end();
 }

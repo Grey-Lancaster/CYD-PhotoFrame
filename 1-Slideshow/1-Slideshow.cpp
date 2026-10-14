@@ -325,9 +325,10 @@ static void calibrateBitbang() {
       }
       if (n == 0) { i--; continue; }  // lifted too fast: ask again
       rx[i] = sumX / n; ry[i] = sumY / n;
-      // stored for 0 degrees: at 180 the target shown at (tx,ty) is at the opposite corner of the 0-degree frame
-      sx[i] = settings.rotation == 2 ? W - 1 - tx[i] : tx[i];
-      sy[i] = settings.rotation == 2 ? H - 1 - ty[i] : ty[i];
+      // stored for 0 (landscape) or 90 (portrait): at 180 / 270 the target shown at (tx,ty) is at the
+      // opposite corner of that frame
+      sx[i] = settings.rotation >= 2 ? W - 1 - tx[i] : tx[i];
+      sy[i] = settings.rotation >= 2 ? H - 1 - ty[i] : ty[i];
       Serial.printf("Touch cal %d: screen %d,%d raw %.0f,%.0f\n", i + 1, tx[i], ty[i], rx[i], ry[i]);
     }
     ok = fitAffine(rx, ry, sx, sy, 5, fit, rms) && rms <= 12.0;
@@ -364,7 +365,7 @@ bool touchReadXY(int &x, int &y) {
   }
   x = constrain(x, 0, tft.width() - 1);
   y = constrain(y, 0, tft.height() - 1);
-  if (settings.rotation == 2) {  // the calibration is stored for 0 degrees; 180 is the same screen turned over
+  if (settings.rotation >= 2) {  // stored for 0 / 90 degrees; 180 / 270 is the same screen turned over
     x = tft.width() - 1 - x;
     y = tft.height() - 1 - y;
   }
