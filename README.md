@@ -1,5 +1,7 @@
 # CYD PhotoFrame
 
+*[Leer en español](#cyd-photoframe-español)*
+
 A photo frame for the ESP32 **"Cheap Yellow Display" (CYD)** — a ~$15 board with a 320×240 touch screen, SD card slot and speaker. Photos live on the SD card, and you manage everything from your phone or PC through a built-in web page. It also runs on the **Freenove 4.0" ESP32-S3 display** (see [below](#freenove-40-esp32-s3)).
 
 ## ⚡ Easiest way to install
@@ -144,3 +146,78 @@ The Freenove build also uses the FT6336U library and Espressif's ES8311 driver.
 ## License
 
 [MIT](LICENSE)
+
+---
+
+# CYD PhotoFrame (Español)
+
+Un marco de fotos para el ESP32 **"Cheap Yellow Display" (CYD)**, una placa de unos 15 $ con pantalla táctil de 320×240, ranura para tarjeta SD y altavoz. Las fotos están en la tarjeta SD y todo se gestiona desde el móvil o el PC con una página web integrada, que también está en español. Funciona además con la pantalla **Freenove de 4,0" con ESP32-S3**.
+
+## ⚡ La forma más fácil de instalar
+
+### [➡ Abrir el instalador web](https://grey-lancaster.github.io/CYD-PhotoFrame/)
+
+Conecta el marco al ordenador con un cable USB, pulsa un botón y listo: no hay que instalar nada.
+
+- Usa **Chrome o Edge en un ordenador**. Firefox, Safari y los móviles no pueden grabar por USB.
+- **¿Qué botón?** Depende del panel de la pantalla de tu placa, no del número de puertos USB. Empieza por el botón **1**. Si la pantalla se queda en blanco o la imagen parece un negativo, no se ha estropeado nada: prueba otro.
+
+  | Botón del instalador | Versión | Pantalla |
+  | --- | --- | --- |
+  | **1. CYD** | `cyd` | ILI9341, colores normales: el CYD estándar y muchas placas "2 USB" |
+  | **2. CYD2** | `cyd2usb` | ST7789 (placas "2 USB" con pantalla ST7789) |
+  | **3. CYD2 alternativo** | `cyd2b` | ILI9341, colores invertidos |
+  | **4. CYD de 3,5"** | `cyd35` | ST7796 480×320: el CYD de 3,5 pulgadas |
+  | **5. Freenove 4" S3** | `freenove4` | Freenove FNK0104S de 4,0 pulgadas con ESP32-S3, ST7796 480×320, táctil capacitivo |
+
+  ¿Solo fallan los colores? No hace falta otro archivo: en la página web del marco, en *Ajustes*, marca **Intercambiar rojo y azul** o **Invertir colores**.
+- Instalar desde la página reemplaza todo lo de la placa, así que tendrás que configurar de nuevo el WiFi. Las fotos de la tarjeta SD no se tocan.
+- Si el ordenador no reconoce la placa, instala el controlador USB CH340 (hay enlaces en la página del instalador).
+
+## Primer arranque
+
+1. Pon en la ranura una tarjeta SD FAT32 con algunas fotos `.jpg` (o añádelas después desde la página web).
+2. Enciende el marco. Muestra la pantalla de inicio y luego intenta conectarse al WiFi guardado.
+3. Solo la primera vez: los CYD de 2,8" y 3,5" piden calibrar la pantalla táctil (toca las cruces a medida que aparecen; se guarda). Después el marco pregunta el **idioma** (inglés o español) y muestra en su pantalla las redes WiFi que ve: toca la tuya (o elige *Red oculta...* si no aparece) y escribe la contraseña con el teclado en pantalla. Ya no existe el punto de acceso `ESP32_AP`.
+4. La pantalla muestra la dirección del marco y un código QR. Ábrela en un navegador (o usa **http://photoframe.local**).
+
+El marco sigue funcionando sin WiFi (solo muestra las fotos) y se reconecta solo cuando vuelve la red.
+Para elegir otra red WiFi más adelante, **mantén pulsado el botón BOOT al encenderlo**. El marco recuerda varias redes y se une a la más fuerte que conoce. Un marco actualizado desde la 4.3 o anterior conserva su WiFi.
+Si nadie toca un marco sin WiFi guardado durante 3 minutos, empieza la presentación sin WiFi.
+
+## Pantalla táctil y botones
+
+| Acción | Resultado |
+| --- | --- |
+| Tocar el tercio izquierdo | Foto anterior |
+| Tocar el tercio derecho (o botón BOOT) | Foto siguiente |
+| Tocar el centro | Muestra la dirección IP y el código QR |
+
+## Página web
+
+- **Vista previa en vivo** de lo que muestra el marco, con anterior / siguiente / pausa.
+- **Subir** fotos arrastrándolas (varias a la vez). Se **redimensionan en tu navegador** para ajustarse a la pantalla antes de enviarlas, así que no hace falta prepararlas. Puedes recortar para llenar la pantalla o dejar bandas negras.
+- **Eliminar** fotos, con miniaturas.
+- **Ajustes** (se guardan en el marco): segundos por foto, orden aleatorio, brillo, volumen y *modo nocturno* (apaga la pantalla entre dos horas; necesita WiFi una vez para el reloj).
+- **Sonido**: sube `music.wav` o `music.mp3` y suena (por el altavoz) al subir una foto o cuando quieras.
+- **Actualización del firmware** en `/update`. Sube el `firmware.bin` de una versión publicada.
+- **Idioma**: la página aparece en el idioma del marco; el interruptor **EN / ES** de la esquina cambia también el idioma del marco.
+- **Rotación de la pantalla**: 0, 90, 180 y 270 grados en todas las placas, para poner el marco en vertical o el USB en cualquier lado. Los CYD piden calibrar la pantalla táctil la primera vez que usas cada orientación.
+
+No hay contraseña en la página web: conecta el marco solo a una red de confianza.
+
+## Problemas frecuentes
+
+- **Pantalla en blanco o colores como un negativo**: las placas "2 USB" traen un panel ST7789 o ILI9341. Prueba otro botón del instalador (ver arriba).
+- **Fotos como un negativo**: en *Ajustes* marca **Invertir colores**.
+- **Rojo y azul intercambiados**: en *Ajustes* marca **Intercambiar rojo y azul** y pulsa *Guardar ajustes*.
+- **"No SD card"**: vuelve a insertar la tarjeta; el marco reintenta cada pocos segundos. Solo FAT32.
+- **Las fotos no se ven**: solo se admiten JPEG de tipo *baseline*. Súbelas desde la página web, que las convierte.
+
+Más detalles técnicos (compilar desde el código, el desarrollo) en la parte inglesa de arriba.
+
+## Créditos y licencia
+
+Creado por **Grey Lancaster** con ayuda de ChatGPT, Claude y la comunidad de código abierto. Gracias a los autores de TouchWifiProvisioner, LVGL, ESPAsyncWebServer, TFT_eSPI, SdFat, JPEGDEC, QRCode, ESP8266Audio y ElegantOTA. Licencia [MIT](LICENSE).
+
+*La traducción al español es nueva; se agradecen las correcciones.*
