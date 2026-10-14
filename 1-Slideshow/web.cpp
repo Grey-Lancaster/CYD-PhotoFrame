@@ -90,6 +90,7 @@ static String statusJson() {
   out += String(",\"swaprb\":") + (settings.swapRB ? "true" : "false");
   out += String(",\"invert\":") + (settings.invert ? "true" : "false");
   out += ",\"rot\":" + String(settings.rotation) + ",\"rotn\":" + String(displayRotationSteps());
+  out += ",\"sw\":" + String(tft.width()) + ",\"sh\":" + String(tft.height());  // screen size in the current rotation
   out += ",\"touchcal\":true";
   out += String(",\"sndup\":") + (settings.soundOnUpload ? "true" : "false");
   out += String(",\"night\":") + (settings.nightEnabled ? "true" : "false");

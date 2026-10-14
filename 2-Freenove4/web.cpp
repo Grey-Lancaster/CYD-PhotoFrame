@@ -90,6 +90,7 @@ static String statusJson() {
   out += String(",\"swaprb\":") + (settings.swapRB ? "true" : "false");
   out += String(",\"invert\":") + (settings.invert ? "true" : "false");
   out += ",\"rot\":" + String(settings.rotation);
+  out += ",\"sw\":" + String(tft.width()) + ",\"sh\":" + String(tft.height());  // screen size in the current rotation
 #ifdef TOUCH_CS
   out += ",\"touchcal\":true";
 #endif

@@ -105,7 +105,7 @@ jobs:
             - **`*-update.bin`**: firmware only, for a frame that is already running: open
               `http://photoframe.local/update` and upload it. Keeps your WiFi login and settings.
 
-            ## What's new in 4.4-beta3
+            ## What's new in 4.4-beta4
 
             - **Screen rotation setting on the web page** (*Screen rotation*; the frame restarts when you change it):
               - **3.5-inch (`cyd35`) and Freenove 4-inch:** 0, 90, 180 and 270 degrees (0 is the usual landscape).
@@ -113,6 +113,8 @@ jobs:
               - The 3.5-inch board asks you to touch the corners the first time you use a new orientation (each
                 orientation keeps its own calibration). The 2.8-inch boards and the Freenove need no extra calibration.
               - In portrait the info/QR screen puts the QR code under the text.
+            - **Upload resize follows the screen:** the web page's *Resize* option now uses the frame's real size in the
+              current rotation (for example 320×480 in portrait on the 3.5-inch board) instead of a fixed 320×240 or 480×320.
             - **Testers wanted:** please try each rotation on your board and report which way 90 turns, whether touch
               left/right and the colours are right, and how the on-screen WiFi picker looks in portrait (not checked yet).
               Hardware-tested so far: `cyd2usb`. Portrait on the Freenove and 3.5-inch boards is calculated, not yet seen.

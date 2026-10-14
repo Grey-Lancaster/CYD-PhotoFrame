@@ -70,7 +70,7 @@ details{margin-top:12px;color:var(--mut);font-size:13px}
     Drop photos here (or a <b>music.wav / .mp3</b> sound file), or
     <label class="btn" style="margin:0 4px">Choose files<input type="file" id="files" multiple accept="image/*,audio/*,.wav,.mp3" hidden></label>
     <div>
-      <label class="opt"><input type="checkbox" id="resize" checked> Resize for the 480×320 screen</label>
+      <label class="opt"><input type="checkbox" id="resize" checked> Resize for the <span id="scrsz">480×320</span> screen</label>
       <label class="opt"><input type="checkbox" id="fill"> Crop to fill (otherwise letterbox)</label>
     </div>
   </div>
@@ -150,6 +150,7 @@ for(let h=0;h<24;h++){const o=(h%12||12)+(h<12?' AM':' PM')+(h==0?' (midnight)':
 function fmtUp(s){const d=Math.floor(s/86400),h=Math.floor(s%86400/3600),m=Math.floor(s%3600/60);return (d?d+'d ':'')+h+'h '+m+'m'}
 
 function fillRot(s){
+  if(s.sw)$('#scrsz').textContent=s.sw+'×'+s.sh;
   const n=s.rotn||4;[...$('#rot').options].forEach(o=>{o.hidden=o.disabled=(n==2&&(o.value&1)==1)});
   if(s.rot!==undefined){$('#rotl').hidden=false;$('#rot').value=s.rot}
 }
@@ -223,7 +224,7 @@ $('#save').onclick=async()=>{
 async function prep(f){
   if(!$('#resize').checked||!f.type.startsWith('image/'))return {blob:f,name:f.name};
   const bm=await createImageBitmap(f);
-  const W=480,H=320,fill=$('#fill').checked;
+  const W=st.sw||480,H=st.sh||320,fill=$('#fill').checked;
   let w,h,cw,ch;
   if(fill){cw=W;ch=H;const s=Math.max(W/bm.width,H/bm.height);w=bm.width*s;h=bm.height*s}
   else{const s=Math.min(1,W/bm.width,H/bm.height);w=cw=Math.max(1,Math.round(bm.width*s));h=ch=Math.max(1,Math.round(bm.height*s))}
