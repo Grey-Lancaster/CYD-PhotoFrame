@@ -1,6 +1,6 @@
 {
-  "name": "CYD PhotoFrame 4.3 (ILI9341, normal colours)",
-  "version": "4.3.0",
+  "name": "CYD PhotoFrame 4.4 (ILI9341, normal colours)",
+  "version": "4.4.0",
   "builds": [
     {
       "chipFamily": "ESP32",
