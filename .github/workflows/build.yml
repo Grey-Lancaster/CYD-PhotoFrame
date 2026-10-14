@@ -105,6 +105,14 @@ jobs:
             - **`*-update.bin`**: firmware only, for a frame that is already running: open
               `http://photoframe.local/update` and upload it. Keeps your WiFi login and settings.
 
+            ## What's new in 4.5
+
+            - **The web page is now in English and Spanish.** It opens in the language the frame is set to (the one
+              chosen on the frame's own WiFi screen), and the **EN / ES** switch in the corner changes the frame's
+              language too, so both stay together. Translations may need polishing; corrections are welcome.
+            - There is a Spanish README at the bottom of the project page.
+            - Nothing else changed: updating from 4.4 with the `*-update.bin` keeps your WiFi and settings.
+
             ## What's new in 4.4
 
             - **Screen rotation** (a setting on the web page; the frame restarts when you change it):

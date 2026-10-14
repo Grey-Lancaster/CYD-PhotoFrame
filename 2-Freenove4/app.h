@@ -5,7 +5,7 @@
 #include <TFT_eSPI.h>
 #include <functional>
 
-#define FW_VERSION "4.4"
+#define FW_VERSION "4.5"
 #define HOSTNAME "photoframe"
 
 // ---------------------------------------------------------------- pins (FNK0104S 4.0" ESP32-S3 display)
