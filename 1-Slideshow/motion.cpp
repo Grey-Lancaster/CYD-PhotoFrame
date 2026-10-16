@@ -65,6 +65,15 @@ static void csiCb(void *, wifi_csi_info_t *info) {
   }
   haveEma = true;
   float turb = d / cnt;
+  // Some chips/SDK builds (the ESP32-S3 on Arduino-ESP32 2.x) deliver a constant placeholder instead of
+  // real CSI, so d stays 0. Then fall back to how much the packet's signal strength (RSSI) wanders.
+  static float rssiEma = 0;
+  static bool haveRssi = false;
+  float r = info->rx_ctrl.rssi;
+  if (!haveRssi) { rssiEma = r; haveRssi = true; }
+  float rdev = fabsf(r - rssiEma);
+  rssiEma += 0.05f * (r - rssiEma);
+  if (d <= 0.0f) turb = rdev * 0.01f;
   portENTER_CRITICAL(&mux);
   ring[ringCount % WIN] = turb;
   ringCount++;
