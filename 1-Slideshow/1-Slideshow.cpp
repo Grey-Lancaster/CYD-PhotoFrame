@@ -411,9 +411,10 @@ static void touchBegin() {
 }
 
 // ---------------------------------------------------------------- motion sleep
-static void wakeScreen() {
+static void wakeScreen(uint8_t cause) {
   if (!g_asleep) return;
   g_asleep = false;
+  motionLogEvent(false, cause);
   if (!g_night) displaySetBrightness(settings.brightness);
   lastChange = millis();
   lastActivity = millis();
@@ -429,16 +430,17 @@ static void updateSleep() {
   if (now - last < 250) return;
   last = now;
   if (!settings.motionEnabled) {
-    wakeScreen();
+    wakeScreen(4);
     return;
   }
   if (!motionReady() || motionDetected()) {
     lastActivity = now;
-    wakeScreen();
+    wakeScreen(motionDetected() ? 1 : 5);
     return;
   }
   if (!g_asleep && now - lastActivity >= (uint32_t)settings.motionMin * 60000UL) {
     g_asleep = true;
+    motionLogEvent(true, 0);
     displaySetBrightness(0);
     Serial.println("Screen sleep (no motion)");
   }
@@ -456,7 +458,7 @@ static void handleInput() {
     buttonPressed = false;
     lastActivity = now;
     if (g_asleep) {
-      wakeScreen();
+      wakeScreen(3);
       return;
     }
     if (now - lastAction > 300) {
@@ -496,7 +498,7 @@ static void handleInput() {
   if (touching || now - lastAction < 500) return;
   touching = true;
   if (g_asleep) {  // the first touch only wakes the screen
-    wakeScreen();
+    wakeScreen(2);
     lastAction = millis();
     return;
   }

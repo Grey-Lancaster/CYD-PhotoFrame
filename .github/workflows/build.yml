@@ -105,6 +105,14 @@ jobs:
             - **`*-update.bin`**: firmware only, for a frame that is already running: open
               `http://photoframe.local/update` and upload it. Keeps your WiFi login and settings.
 
+            ## What's new in 4.5.3
+
+            - **Motion log (every board):** under *About* on the web page, a short log shows when the screen went to
+              sleep and when it woke, and why (motion, touch or the BOOT button). It keeps the last 20 events, has a
+              **Clear log** button, and starts empty again when the frame restarts.
+            - Updating from 4.5.2: upload the `*-update.bin` for your build on the frame's `/update` page. That keeps
+              your WiFi and settings.
+
             ## What's new in 4.5.2
 
             - **Motion sleep (experimental, every board):** the screen can turn off when nobody is around and wake when

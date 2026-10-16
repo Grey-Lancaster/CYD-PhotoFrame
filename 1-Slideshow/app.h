@@ -5,7 +5,7 @@
 #include <TFT_eSPI.h>
 #include <functional>
 
-#define FW_VERSION "4.5.2"
+#define FW_VERSION "4.5.3"
 #define HOSTNAME "photoframe"
 
 // ---------------------------------------------------------------- pins
@@ -115,6 +115,10 @@ void motionBegin();          // starts the sensing task (idle until enabled and 
 bool motionDetected();       // someone is moving nearby
 bool motionReady();          // sensing is running and warmed up
 float motionScore();         // >= 1 means motion; for tuning
+// Wake / sleep log shown on the web page. causes: 0 no motion, 1 motion, 2 touch, 3 BOOT button, 4 setting turned off, 5 sensor offline
+void motionLogEvent(bool sleep, uint8_t cause);
+void motionLogClear();
+String motionLogJson();
 
 // ---------------------------------------------------------------- audio
 bool audioPlay();                  // false if busy or no sound file

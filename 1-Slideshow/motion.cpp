@@ -6,6 +6,7 @@
 #include <WiFi.h>
 #include <math.h>
 #include <string.h>
+#include <time.h>
 #include "esp_wifi.h"
 #include "lwip/sockets.h"
 #include "app.h"
@@ -194,6 +195,54 @@ static void motionTask(void *) {
     }
     vTaskDelay(pdMS_TO_TICKS(10));
   }
+}
+
+// ---------------------------------------------------------------- sleep / wake log
+// Only the screen going to sleep and waking, not every detection. Kept in RAM (lost on restart).
+#define MLOG_MAX 20
+struct MLogEntry { uint32_t up; time_t epoch; bool sleep; uint8_t cause; };
+static MLogEntry mlog[MLOG_MAX];
+static int mlogCount = 0, mlogHead = 0;  // head = next slot to write
+static portMUX_TYPE mlogMux = portMUX_INITIALIZER_UNLOCKED;
+
+void motionLogEvent(bool sleep, uint8_t cause) {
+  time_t now = time(nullptr);
+  portENTER_CRITICAL(&mlogMux);
+  mlog[mlogHead] = {millis() / 1000, now > 1600000000 ? now : 0, sleep, cause};
+  mlogHead = (mlogHead + 1) % MLOG_MAX;
+  if (mlogCount < MLOG_MAX) mlogCount++;
+  portEXIT_CRITICAL(&mlogMux);
+}
+
+void motionLogClear() {
+  portENTER_CRITICAL(&mlogMux);
+  mlogCount = mlogHead = 0;
+  portEXIT_CRITICAL(&mlogMux);
+}
+
+// Newest first: [{"w":"Fri 3:42 PM","up":123,"e":0|1,"c":cause}]  (w is "" while the clock is not set)
+String motionLogJson() {
+  MLogEntry copy[MLOG_MAX];
+  int n;
+  portENTER_CRITICAL(&mlogMux);
+  n = mlogCount;
+  for (int i = 0; i < n; i++) copy[i] = mlog[(mlogHead - 1 - i + 2 * MLOG_MAX) % MLOG_MAX];
+  portEXIT_CRITICAL(&mlogMux);
+  String out = "[";
+  for (int i = 0; i < n; i++) {
+    char buf[40] = "";
+    if (copy[i].epoch) {
+      struct tm ti;
+      localtime_r(&copy[i].epoch, &ti);
+      int h12 = ti.tm_hour % 12 == 0 ? 12 : ti.tm_hour % 12;
+      char day[8];
+      strftime(day, sizeof(day), "%a", &ti);
+      snprintf(buf, sizeof(buf), "%s %d/%d %d:%02d %s", day, ti.tm_mon + 1, ti.tm_mday, h12, ti.tm_min, ti.tm_hour < 12 ? "AM" : "PM");
+    }
+    if (i) out += ",";
+    out += String("{\"w\":\"") + buf + "\",\"up\":" + copy[i].up + ",\"e\":" + (copy[i].sleep ? 0 : 1) + ",\"c\":" + copy[i].cause + "}";
+  }
+  return out + "]";
 }
 
 void motionBegin() {

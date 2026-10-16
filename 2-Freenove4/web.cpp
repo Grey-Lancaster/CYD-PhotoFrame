@@ -162,6 +162,11 @@ static void setupRoutes() {
   });
   server.on("/slideshow", HTTP_GET, [](AsyncWebServerRequest *r) { r->redirect("/"); });
 
+  server.on("/api/motionlog", HTTP_GET, [](AsyncWebServerRequest *r) { sendJson(r, 200, motionLogJson()); });
+  server.on("/api/motionlog/clear", HTTP_POST, [](AsyncWebServerRequest *r) {
+    motionLogClear();
+    sendJson(r, 200, "{\"ok\":true}");
+  });
   server.on("/api/status", HTTP_GET, [](AsyncWebServerRequest *r) { sendJson(r, 200, statusJson()); });
   server.on("/api/images", HTTP_GET, [](AsyncWebServerRequest *r) { sendJson(r, 200, playlistJson()); });
 
