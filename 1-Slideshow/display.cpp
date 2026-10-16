@@ -151,7 +151,7 @@ static inline uint16_t avg4(uint16_t a, uint16_t b, uint16_t c, uint16_t d) {
 
 static int jpegDraw(JPEGDRAW *pDraw) {
   if (!rs.active) {
-    tft.pushImage(pDraw->x, pDraw->y, pDraw->iWidth, pDraw->iHeight, pDraw->pPixels);
+    tft.pushImage(rs.ox + pDraw->x, rs.oy + pDraw->y, pDraw->iWidth, pDraw->iHeight, pDraw->pPixels);
     return 1;
   }
   const int iw = pDraw->iWidth, ih = pDraw->iHeight;
@@ -219,8 +219,9 @@ static bool decodeOpened() {
   rs.oy = (H - rs.dstH) / 2;
   if (rs.dstW < W || rs.dstH < H) tft.fillScreen(TFT_BLACK);
   tft.startWrite();
-  // unscaled path draws at absolute coordinates, so pass the offset to the decoder
-  int rc = jpeg.decode(rs.active ? 0 : rs.ox, rs.active ? 0 : rs.oy, option);
+  // Always decode at 0,0 and place the picture in jpegDraw(): JPEGDEC 1.8.4 can crash (memset in
+  // JPEGDecodeMCU) when it is given an x offset of 16 or more with some 4:2:0 images.
+  int rc = jpeg.decode(0, 0, option);
   tft.endWrite();
   rs.active = false;
   return rc == 1;
