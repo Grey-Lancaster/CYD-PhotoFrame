@@ -105,6 +105,16 @@ jobs:
             - **`*-update.bin`**: firmware only, for a frame that is already running: open
               `http://photoframe.local/update` and upload it. Keeps your WiFi login and settings.
 
+            ## What's new in 4.5.2
+
+            - **Motion sleep (experimental, every board):** the screen can turn off when nobody is around and wake when
+              someone moves or touches it. It uses the frame's own WiFi signal, no extra hardware. Off by default; turn
+              it on under *Settings* on the web page, where a live score helps you tune the sensitivity.
+            - The address screen now also shows the **WiFi network** the frame is connected to.
+            - The Freenove 4-inch frame is now **http://photoframe4.local**, so it can run beside a CYD frame.
+            - Updating from 4.5.1: upload the `*-update.bin` for your build on the frame's `/update` page. That keeps
+              your WiFi and settings.
+
             ## What's new in 4.5.1
 
             - **Fixes a crash on the 2.8-inch and 3.5-inch CYD boards** (`cyd`, `cyd2usb`, `cyd2b`, `cyd35`): a photo narrower

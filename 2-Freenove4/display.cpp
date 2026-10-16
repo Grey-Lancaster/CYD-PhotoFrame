@@ -6,6 +6,7 @@
 
 #include <SD_MMC.h>
 #include <JPEGDEC.h>
+#include <WiFi.h>
 #include "SPIFFS.h"
 #include "qrcode.h"
 #include "app.h"
@@ -254,6 +255,14 @@ void displayShowSplash() {
   }
 }
 
+// Shortens text with "..." so it fits in maxW pixels.
+static String fitText(const String &s, int maxW, int font) {
+  if (tft.textWidth(s, font) <= maxW) return s;
+  String t = s;
+  while (t.length() > 1 && tft.textWidth(t + "...", font) > maxW) t.remove(t.length() - 1);
+  return t + "...";
+}
+
 void displayShowInfo(const String &ip) {
   tft.fillScreen(TFT_BLACK);
   tft.setTextDatum(TL_DATUM);
@@ -267,9 +276,18 @@ void displayShowInfo(const String &ip) {
   tft.drawString("or", 16, 140, 2);
   tft.setTextColor(TFT_GREEN, TFT_BLACK);
   tft.drawString(HOSTNAME ".local", 16, 162, 4);
-  tft.setTextColor(TFT_DARKGREY, TFT_BLACK);
   const bool portrait = tft.height() > tft.width();
-  const int hintY = portrait ? 420 : 262;  // portrait: the QR code goes between the text and the hints
+  String ssid = ip.length() ? WiFi.SSID() : String();
+  if (ssid.length()) {
+    const int qrSide = (4 * 4 + 17) * 5 + 8;  // the QR code below is version 4, 5 px per module
+    int maxW = (portrait ? tft.width() : tft.width() - qrSide - 12) - 32;
+    tft.setTextColor(TFT_WHITE, TFT_BLACK);
+    tft.drawString("WiFi network:", 16, 198, 2);
+    tft.setTextColor(TFT_GREEN, TFT_BLACK);
+    tft.drawString(fitText(ssid, maxW, 4), 16, 216, 4);
+  }
+  tft.setTextColor(TFT_DARKGREY, TFT_BLACK);
+  const int hintY = portrait ? 440 : 262;  // portrait: the QR code goes between the text and the hints
   tft.drawString("Touch left/right: prev/next", 16, hintY, 2);
   tft.drawString("Touch middle: this screen", 16, hintY + 22, 2);
 
@@ -282,7 +300,7 @@ void displayShowInfo(const String &ip) {
   const int quiet = 4;
   int side = qr.size * block + 2 * quiet;
   int x0 = portrait ? (tft.width() - side) / 2 : tft.width() - side - 12;
-  int y0 = portrait ? 220 : 70;
+  int y0 = portrait ? 252 : 70;
   tft.fillRect(x0, y0, side, side, TFT_WHITE);
   for (int y = 0; y < qr.size; y++)
     for (int x = 0; x < qr.size; x++)

@@ -2,6 +2,7 @@
 
 #include <SdFat.h>
 #include <JPEGDEC.h>
+#include <WiFi.h>
 #include "SPIFFS.h"
 #include "qrcode.h"
 #include "app.h"
@@ -277,6 +278,14 @@ void displayShowSplash() {
   }
 }
 
+// Shortens text with "..." so it fits in maxW pixels.
+static String fitText(const String &s, int maxW, int font) {
+  if (tft.textWidth(s, font) <= maxW) return s;
+  String t = s;
+  while (t.length() > 1 && tft.textWidth(t + "...", font) > maxW) t.remove(t.length() - 1);
+  return t + "...";
+}
+
 void displayShowInfo(const String &ip) {
   tft.fillScreen(TFT_BLACK);
   tft.setTextDatum(TL_DATUM);
@@ -290,6 +299,16 @@ void displayShowInfo(const String &ip) {
   tft.drawString("or", 8, 104, 2);
   tft.setTextColor(TFT_GREEN, TFT_BLACK);
   tft.drawString(HOSTNAME ".local", 8, 126, 2);
+  String ssid = ip.length() ? WiFi.SSID() : String();
+  if (ssid.length()) {
+    const bool portraitNow = tft.height() > tft.width();
+    const int qrSide = (4 * 4 + 17) * 4 + 8;  // the QR code below is version 4, 4 px per module
+    int maxW = (portraitNow ? tft.width() : tft.width() - qrSide - 4) - 16 - tft.textWidth("WiFi: ", 2);
+    tft.setTextColor(TFT_WHITE, TFT_BLACK);
+    tft.drawString("WiFi: ", 8, 150, 2);
+    tft.setTextColor(TFT_GREEN, TFT_BLACK);
+    tft.drawString(fitText(ssid, maxW, 2), 8 + tft.textWidth("WiFi: ", 2), 150, 2);
+  }
   tft.setTextColor(TFT_DARKGREY, TFT_BLACK);
   tft.drawString("Touch left/right: prev/next", 8, 190, 2);
   tft.drawString("Touch middle: this screen", 8, 210, 2);

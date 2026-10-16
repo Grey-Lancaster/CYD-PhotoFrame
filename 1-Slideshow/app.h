@@ -5,7 +5,7 @@
 #include <TFT_eSPI.h>
 #include <functional>
 
-#define FW_VERSION "4.5.1"
+#define FW_VERSION "4.5.2"
 #define HOSTNAME "photoframe"
 
 // ---------------------------------------------------------------- pins
