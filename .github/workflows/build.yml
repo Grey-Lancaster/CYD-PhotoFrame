@@ -105,6 +105,14 @@ jobs:
             - **`*-update.bin`**: firmware only, for a frame that is already running: open
               `http://photoframe.local/update` and upload it. Keeps your WiFi login and settings.
 
+            ## What's new in 4.5.1
+
+            - **Fixes a crash on the 2.8-inch and 3.5-inch CYD boards** (`cyd`, `cyd2usb`, `cyd2b`, `cyd35`): a photo narrower
+              than the screen (for example 270 pixels wide on a 320 pixel screen) could make the frame restart each time
+              it was shown. The frame now draws such photos correctly. The Freenove was not affected.
+            - Updating from 4.5 or 4.4: upload the `*-update.bin` for your build on the frame's `/update` page. That keeps
+              your WiFi and settings.
+
             ## What's new in 4.5
 
             - **The web page is now in English and Spanish.** It opens in the language the frame is set to (the one
