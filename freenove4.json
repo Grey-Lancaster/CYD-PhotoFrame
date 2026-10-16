@@ -1,6 +1,6 @@
 {
-  "name": "PhotoFrame 4.5 (Freenove 4.0-inch ESP32-S3)",
-  "version": "4.5.0",
+  "name": "PhotoFrame 4.5.1 (Freenove 4.0-inch ESP32-S3)",
+  "version": "4.5.1",
   "builds": [
     {
       "chipFamily": "ESP32-S3",

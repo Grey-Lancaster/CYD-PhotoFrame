@@ -1,6 +1,6 @@
 {
-  "name": "CYD PhotoFrame 4.5 (ILI9341, inverted colours)",
-  "version": "4.5.0",
+  "name": "CYD PhotoFrame 4.5.1 (ILI9341, inverted colours)",
+  "version": "4.5.1",
   "builds": [
     {
       "chipFamily": "ESP32",
