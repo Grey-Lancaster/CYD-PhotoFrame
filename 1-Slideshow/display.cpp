@@ -308,8 +308,10 @@ void displayShowInfo(const String &ip) {
   tft.setTextColor(TFT_GREEN, TFT_BLACK);
   tft.drawString(HOSTNAME ".local", 8, 126, 2);
   tft.setTextColor(TFT_DARKGREY, TFT_BLACK);
-  tft.drawString("Touch left/right: prev/next", 8, 190, 2);
-  tft.drawString("Touch middle: this screen", 8, 210, 2);
+  // 2.8" boards stood up in portrait (240x320) are short: smaller QR code under the text, one hint line
+  const bool compact = tft.height() > tft.width() && tft.height() < 400;
+  tft.drawString("Touch left/right: prev/next", 8, compact ? 262 : 190, 2);
+  if (!compact) tft.drawString("Touch middle: this screen", 8, 210, 2);
 
   if (ip.length() == 0) {
     drawInfoWifiButton();
@@ -319,12 +321,12 @@ void displayShowInfo(const String &ip) {
   QRCode qr;
   uint8_t qrData[qrcode_getBufferSize(4)];
   qrcode_initText(&qr, qrData, 4, ECC_MEDIUM, url.c_str());
-  const int block = 4;
+  const int block = compact ? 3 : 4;
   const int quiet = 4;
   int side = qr.size * block + 2 * quiet;
   const bool portrait = tft.height() > tft.width();
   int x0 = portrait ? (tft.width() - side) / 2 : tft.width() - side - 4;
-  int y0 = portrait ? 250 : 56;
+  int y0 = portrait ? (compact ? 148 : 250) : 56;
   tft.fillRect(x0, y0, side, side, TFT_WHITE);
   for (int y = 0; y < qr.size; y++)
     for (int x = 0; x < qr.size; x++)
