@@ -104,6 +104,7 @@ void displaySetBrightness(uint8_t percent);   // 0 turns the backlight off
 void displayShowSplash();
 void displayShowMessage(const char *title, const char *line1 = nullptr, const char *line2 = nullptr, uint16_t color = TFT_WHITE);
 void displayShowInfo(const String &ip);
+void displayInfoWifiButton(int &x, int &y, int &w, int &h);  // the WiFi button on the info screen
 void displayShowOta(const char *line, int percent);
 bool displayPhoto(const String &name);        // false if it could not be decoded
 
@@ -138,4 +139,7 @@ void wifiSetupBegin(const char *hostname, std::function<void(const String &ip)> 
 void wifiSetupLoop();
 void wifiSetupReset();       // forget all saved networks and show the picker
 bool wifiHasSavedNetworks();
+void wifiSetupOpenPicker();   // show the picker without forgetting networks; no timeout, has Cancel
+bool wifiSetupPickerOpen();   // true until the user cancels or joins a network
+bool wifiSetupJoined();       // true if the picker ended by joining a network
 bool touchReadXY(int &x, int &y);  // screen position of the current touch (1-Slideshow.cpp)
