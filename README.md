@@ -70,6 +70,7 @@ The `freenove4` build is for the **Freenove FNK0104S** 4.0-inch display board: E
 The frame keeps working without WiFi (it just shows the slideshow) and reconnects by itself when the network is back.
 To pick a different WiFi network later, **hold the BOOT button while powering on**. The frame remembers several networks and joins the strongest one it knows. A frame updated from 4.3 or older keeps its saved WiFi.
 If nobody touches a frame that has no WiFi saved for 3 minutes, it starts the slideshow without WiFi.
+To change the network without waiting for that, touch the middle of the picture to show the address screen and tap its **WiFi** button: the picker opens with no time limit and a **Cancel** row, and your saved networks stay.
 
 ## Touch and buttons
 
@@ -184,6 +185,7 @@ Conecta el marco al ordenador con un cable USB, pulsa un botón y listo: no hay 
 El marco sigue funcionando sin WiFi (solo muestra las fotos) y se reconecta solo cuando vuelve la red.
 Para elegir otra red WiFi más adelante, **mantén pulsado el botón BOOT al encenderlo**. El marco recuerda varias redes y se une a la más fuerte que conoce. Un marco actualizado desde la 4.3 o anterior conserva su WiFi.
 Si nadie toca un marco sin WiFi guardado durante 3 minutos, empieza la presentación sin WiFi.
+Para cambiar de red sin esperar, toca el centro de la imagen para ver la pantalla de la dirección y pulsa su botón **WiFi**: el selector se abre sin límite de tiempo y con una fila **Cancelar**, y las redes guardadas se conservan.
 
 ## Pantalla táctil y botones
 
