@@ -5,7 +5,7 @@
 #include <TFT_eSPI.h>
 #include <functional>
 
-#define FW_VERSION "4.5.3"
+#define FW_VERSION "4.5.4"
 #define HOSTNAME "photoframe4"  // not "photoframe", so a 4" and a CYD can run side by side
 
 // ---------------------------------------------------------------- pins (FNK0104S 4.0" ESP32-S3 display)
