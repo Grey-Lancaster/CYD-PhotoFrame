@@ -32,6 +32,8 @@ static void touchpadRead(lv_indev_drv_t *, lv_indev_data_t *data) {
 
 static std::function<void(const String &)> connectedCb;
 static bool firedConnected = false;
+static bool pickerOpen = false;    // picker opened from the info screen's WiFi button
+static bool pickerJoined = false;
 
 void wifiSetupBegin(const char *hostname, std::function<void(const String &ip)> onConnected) {
   connectedCb = onConnected;
@@ -56,6 +58,12 @@ void wifiSetupBegin(const char *hostname, std::function<void(const String &ip)> 
   lv_obj_set_style_bg_color(lv_scr_act(), lv_color_black(), 0);
 
   TouchWifiProvisioner::begin(lv_scr_act(), hostname, [](const String &ip) {
+    // joining a network from the picker button ends that picker
+    if (pickerOpen) {
+      pickerOpen = false;
+      pickerJoined = true;
+      return;
+    }
     // also called again after later reconnects; only the first call ends setup
     if (firedConnected) return;
     firedConnected = true;
@@ -67,6 +75,15 @@ void wifiSetupLoop() {
   lv_timer_handler();
   TouchWifiProvisioner::loop();
 }
+
+void wifiSetupOpenPicker() {
+  pickerOpen = true;
+  pickerJoined = false;
+  TouchWifiProvisioner::openPicker([] { pickerOpen = false; });
+}
+
+bool wifiSetupPickerOpen() { return pickerOpen; }
+bool wifiSetupJoined() { return pickerJoined; }
 
 void wifiSetupReset() {
   TouchWifiProvisioner::reset();

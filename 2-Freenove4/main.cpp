@@ -113,6 +113,20 @@ static void stepAndShow(int delta) {
   if (playlistStep(delta, name)) showCurrentPhoto(delta);
 }
 
+// The info screen's WiFi button: the on-screen picker with no timeout and a Cancel row; the
+// saved networks stay. Joining a network restarts the frame so everything rebinds to it.
+static void showInfoScreen();
+static void wifiPickerModal() {
+  wifiSetupOpenPicker();
+  while (wifiSetupPickerOpen()) {
+    esp_task_wdt_reset();
+    wifiSetupLoop();
+    delay(5);
+  }
+  if (wifiSetupJoined()) g_restartAt = millis() + 500;
+  showInfoScreen();
+}
+
 static void showInfoScreen() {
   displayShowInfo(g_ip);
   screen = SCREEN_INFO;
@@ -230,7 +244,11 @@ static void handleInput() {
   }
   Serial.printf("[%lu] Touch x=%d y=%d\n", (unsigned long)now, x, y);
 
-  if (x < tft.width() / 3) {
+  int bx, by, bw, bh;
+  displayInfoWifiButton(bx, by, bw, bh);
+  if (screen == SCREEN_INFO && x >= bx && x < bx + bw && y >= by && y < by + bh) {
+    wifiPickerModal();
+  } else if (x < tft.width() / 3) {
     stepAndShow(-1);
   } else if (x > tft.width() * 2 / 3) {
     stepAndShow(1);

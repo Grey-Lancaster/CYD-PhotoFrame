@@ -5,7 +5,7 @@
 #include <TFT_eSPI.h>
 #include <functional>
 
-#define FW_VERSION "4.5.4"
+#define FW_VERSION "4.6"
 #define HOSTNAME "photoframe4"  // not "photoframe", so a 4" and a CYD can run side by side
 
 // ---------------------------------------------------------------- pins (FNK0104S 4.0" ESP32-S3 display)
@@ -107,6 +107,7 @@ void displaySetBrightness(uint8_t percent);   // 0 turns the backlight off
 void displayShowSplash();
 void displayShowMessage(const char *title, const char *line1 = nullptr, const char *line2 = nullptr, uint16_t color = TFT_WHITE);
 void displayShowInfo(const String &ip);
+void displayInfoWifiButton(int &x, int &y, int &w, int &h);  // the WiFi button on the info screen
 void displayShowOta(const char *line, int percent);
 bool displayPhoto(const String &name);        // false if it could not be decoded
 
@@ -122,6 +123,9 @@ void wifiSetupBegin(const char *hostname, std::function<void(const String &ip)> 
 void wifiSetupLoop();                         // call every loop() pass until connected
 void wifiSetupReset();                        // forget the saved network(s) and show the picker
 bool wifiHasSavedNetworks();
+void wifiSetupOpenPicker();   // show the picker without forgetting networks; no timeout, has Cancel
+bool wifiSetupPickerOpen();   // true until the user cancels or joins a network
+bool wifiSetupJoined();       // true if the picker ended by joining a network
 
 // ---------------------------------------------------------------- motion (motion.cpp)
 void motionBegin();          // starts the sensing task (idle until enabled and online)

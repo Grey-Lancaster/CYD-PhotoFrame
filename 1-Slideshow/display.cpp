@@ -286,6 +286,23 @@ static String fitText(const String &s, int maxW, int font) {
   return t + "...";
 }
 
+void displayInfoWifiButton(int &x, int &y, int &w, int &h) {
+  w = 100;
+  h = 34;
+  x = tft.width() - w - 8;
+  y = tft.height() - h - 8;
+}
+
+static void drawInfoWifiButton() {
+  int x, y, w, h;
+  displayInfoWifiButton(x, y, w, h);
+  tft.fillRoundRect(x, y, w, h, 6, TFT_BLUE);
+  tft.setTextColor(TFT_WHITE, TFT_BLUE);
+  tft.setTextDatum(MC_DATUM);
+  tft.drawString("WiFi", x + w / 2, y + h / 2, 2);
+  tft.setTextDatum(TL_DATUM);
+}
+
 void displayShowInfo(const String &ip) {
   tft.fillScreen(TFT_BLACK);
   tft.setTextDatum(TL_DATUM);
@@ -310,24 +327,32 @@ void displayShowInfo(const String &ip) {
     tft.drawString(fitText(ssid, maxW, 2), 8 + tft.textWidth("WiFi: ", 2), 150, 2);
   }
   tft.setTextColor(TFT_DARKGREY, TFT_BLACK);
-  tft.drawString("Touch left/right: prev/next", 8, 190, 2);
-  tft.drawString("Touch middle: this screen", 8, 210, 2);
+  // 2.8" boards stood up in portrait (240x320) are short: smaller QR code under the text, no hint lines (the WiFi button needs the room)
+  const bool compact = tft.height() > tft.width() && tft.height() < 400;
+  if (!compact) {
+    tft.drawString("Touch left/right: prev/next", 8, 190, 2);
+    tft.drawString("Touch middle: this screen", 8, 210, 2);
+  }
 
-  if (ip.length() == 0) return;
+  if (ip.length() == 0) {
+    drawInfoWifiButton();
+    return;
+  }
   String url = "http://" + ip;
   QRCode qr;
   uint8_t qrData[qrcode_getBufferSize(4)];
   qrcode_initText(&qr, qrData, 4, ECC_MEDIUM, url.c_str());
-  const int block = 4;
+  const int block = compact ? 3 : 4;
   const int quiet = 4;
   int side = qr.size * block + 2 * quiet;
   const bool portrait = tft.height() > tft.width();
   int x0 = portrait ? (tft.width() - side) / 2 : tft.width() - side - 4;
-  int y0 = portrait ? 250 : 56;
+  int y0 = portrait ? (compact ? 170 : 250) : 56;
   tft.fillRect(x0, y0, side, side, TFT_WHITE);
   for (int y = 0; y < qr.size; y++)
     for (int x = 0; x < qr.size; x++)
       if (qrcode_getModule(&qr, x, y)) tft.fillRect(x0 + quiet + x * block, y0 + quiet + y * block, block, block, TFT_BLACK);
+  drawInfoWifiButton();
 }
 
 void displayShowOta(const char *line, int percent) {

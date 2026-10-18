@@ -40,6 +40,8 @@ static void touchpadRead(lv_indev_drv_t *, lv_indev_data_t *data) {
 
 static std::function<void(const String &)> connectedCb;
 static bool firedConnected = false;
+static bool pickerOpen = false;    // picker opened from the info screen's WiFi button
+static bool pickerJoined = false;
 
 // Frames updated from 4.2 or older keep their WiFi login in the ESP32's own WiFi storage
 // (left there by WiFiManager). Copy it into the picker's list once, so updating over the
@@ -88,6 +90,12 @@ void wifiSetupBegin(const char *hostname, std::function<void(const String &ip)> 
   lv_obj_set_style_bg_color(lv_scr_act(), lv_color_black(), 0);
 
   TouchWifiProvisioner::begin(lv_scr_act(), hostname, [](const String &ip) {
+    // joining a network from the picker button ends that picker
+    if (pickerOpen) {
+      pickerOpen = false;
+      pickerJoined = true;
+      return;
+    }
     // also called again after later reconnects; only the first call ends setup
     if (firedConnected) return;
     firedConnected = true;
@@ -99,6 +107,15 @@ void wifiSetupLoop() {
   lv_timer_handler();
   TouchWifiProvisioner::loop();
 }
+
+void wifiSetupOpenPicker() {
+  pickerOpen = true;
+  pickerJoined = false;
+  TouchWifiProvisioner::openPicker([] { pickerOpen = false; });
+}
+
+bool wifiSetupPickerOpen() { return pickerOpen; }
+bool wifiSetupJoined() { return pickerJoined; }
 
 void wifiSetupReset() {
   TouchWifiProvisioner::reset();

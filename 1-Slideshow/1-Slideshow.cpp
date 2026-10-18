@@ -128,6 +128,19 @@ static void showInfoScreen() {
   infoUntil = millis() + INFO_SCREEN_MS;
 }
 
+// The info screen's WiFi button: the on-screen picker with no timeout and a Cancel row; the
+// saved networks stay. Joining a network restarts the frame so everything rebinds to it.
+static void wifiPickerModal() {
+  wifiSetupOpenPicker();
+  while (wifiSetupPickerOpen()) {
+    esp_task_wdt_reset();
+    wifiSetupLoop();
+    delay(5);
+  }
+  if (wifiSetupJoined()) g_restartAt = millis() + 500;
+  showInfoScreen();
+}
+
 static void handleCommands() {
   Cmd c;
   while (xQueueReceive(cmdQueue, &c, 0) == pdTRUE) {
@@ -488,8 +501,8 @@ static void handleInput() {
   // reading flickers during a press, and a photo change takes ~0.4 s).
   static bool touching = false;
   static uint32_t lastDown = 0;
-  int x = 0;
-  if (!readTouch(x)) {
+  int x = 0, y = 0;
+  if (!touchReadXY(x, y)) {
     if (touching && now - lastDown > 250) touching = false;
     return;
   }
@@ -507,7 +520,11 @@ static void handleInput() {
 #ifdef TOUCH_FLIP_X
   x = tft.width() - x;
 #endif
-  if (x < tft.width() / 3) {
+  int bx, by, bw, bh;
+  displayInfoWifiButton(bx, by, bw, bh);
+  if (screen == SCREEN_INFO && x >= bx && x < bx + bw && y >= by && y < by + bh) {
+    wifiPickerModal();
+  } else if (x < tft.width() / 3) {
     stepAndShow(-1);
   } else if (x > tft.width() * 2 / 3) {
     stepAndShow(1);

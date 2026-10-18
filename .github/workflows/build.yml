@@ -105,6 +105,15 @@ jobs:
             - **`*-update.bin`**: firmware only, for a frame that is already running: open
               `http://photoframe.local/update` and upload it. Keeps your WiFi login and settings.
 
+            ## What's new in 4.6
+
+            - **WiFi button on the address screen.** Touch the middle of the picture to show the IP / hostname screen and
+              tap **WiFi**: the network picker opens with no time limit and a **Cancel** row. Your saved networks are kept;
+              joining a new one restarts the frame on it. (Uses TouchWifiProvisioner 1.6.4.)
+            - The address screen on a 2.8-inch board stood up in portrait now fits (smaller QR code).
+            - Updating from 4.5.x: upload the `*-update.bin` for your build on the frame's `/update` page. That keeps
+              your WiFi and settings.
+
             ## What's new in 4.5.4
 
             - **Fixes motion sleep on the Freenove 4-inch board.** On its chip (ESP32-S3) the WiFi radio does not give the
