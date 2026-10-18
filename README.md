@@ -1,6 +1,6 @@
 # CYD PhotoFrame
 
-> **About this branch:** `gh-pages` hosts the [web installer](https://grey-lancaster.github.io/CYD-PhotoFrame/) (`index.html`, the manifest `.json` files and the factory images they flash). The source code is on the [`main` branch](https://github.com/Grey-Lancaster/CYD-PhotoFrame), and every build is on the [Releases page](https://github.com/Grey-Lancaster/CYD-PhotoFrame/releases). The images here are the **v4.5.3** release:
+> **About this branch:** `gh-pages` hosts the [web installer](https://grey-lancaster.github.io/CYD-PhotoFrame/) (`index.html`, the manifest `.json` files and the factory images they flash). The source code is on the [`main` branch](https://github.com/Grey-Lancaster/CYD-PhotoFrame), and every build is on the [Releases page](https://github.com/Grey-Lancaster/CYD-PhotoFrame/releases). The images here are the **v4.5.4** release:
 >
 > | File | Build |
 > | --- | --- |
