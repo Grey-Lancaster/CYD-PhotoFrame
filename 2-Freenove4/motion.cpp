@@ -11,9 +11,11 @@
 #include "lwip/sockets.h"
 #include "app.h"
 
-#define WIN 40            // samples in the variance window
+#define WIN 20            // samples in the variance window (about 2 s at 10 pings per second)
 #define EVAL_MS 250
-#define PING_MS 25
+// 10 pings per second, not 40: on this ESP32-S3 board, CSI on + modem sleep off + a ping every 25 ms made the
+// interrupt watchdog restart the frame (found on the Fish Tank project, same motion code: restarts every few minutes).
+#define PING_MS 100
 #define HITS_ON 4         // consecutive over-threshold evaluations to start motion
 #define HITS_OFF 3        // consecutive quiet evaluations to end it
 
