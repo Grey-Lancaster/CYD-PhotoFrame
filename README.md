@@ -1,6 +1,6 @@
 # CYD PhotoFrame
 
-> **About this branch:** `gh-pages` hosts the [web installer](https://grey-lancaster.github.io/CYD-PhotoFrame/) (`index.html`, the manifest `.json` files and the factory images they flash). The source code is on the [`main` branch](https://github.com/Grey-Lancaster/CYD-PhotoFrame), and every build is on the [Releases page](https://github.com/Grey-Lancaster/CYD-PhotoFrame/releases). The images here are the **v4.6** release:
+> **About this branch:** `gh-pages` hosts the [web installer](https://grey-lancaster.github.io/CYD-PhotoFrame/) (`index.html`, the manifest `.json` files and the factory images they flash). The source code is on the [`main` branch](https://github.com/Grey-Lancaster/CYD-PhotoFrame), and every build is on the [Releases page](https://github.com/Grey-Lancaster/CYD-PhotoFrame/releases). The images here are the **v4.6.1** release:
 >
 > | File | Build |
 > | --- | --- |
@@ -9,6 +9,7 @@
 > | `CYD2bPhotoFrame.bin` | `cyd2b` (ILI9341, inverted colours) |
 > | `cyd35.bin` | `cyd35` (3.5" CYD, ST7796 480×320) |
 > | `freenove4.bin` | `freenove4` (Freenove 4.0" ESP32-S3, ST7796 480×320) |
+> | `freenove28.bin` | `freenove28` (Freenove 2.8" ESP32-S3, ILI9341 320×240) |
 
 A photo frame for the ESP32 **"Cheap Yellow Display" (CYD)** — a ~$15 board with a 320×240 touch screen, SD card slot and speaker. Photos live on the SD card, and you manage everything from your phone or PC through a built-in web page. It also runs on the **Freenove 4.0" ESP32-S3 display** (see [below](#freenove-40-esp32-s3)).
 
@@ -28,6 +29,7 @@ Plug the frame into your computer with a USB cable, click a button, done — no 
   | **3. CYD2 alternate** | `cyd2b` | ILI9341, inverted colours |
   | **4. 3.5" CYD** | `cyd35` | ST7796 480×320: the 3.5-inch CYD (see [below](#35-cyd)) |
   | **5. Freenove 4" S3** | `freenove4` | Freenove FNK0104S 4.0-inch ESP32-S3, ST7796 480×320, capacitive touch (see [below](#freenove-40-esp32-s3)) |
+  | **6. Freenove 2.8" S3** | `freenove28` | Freenove FNK0104B/AB 2.8-inch ESP32-S3, ILI9341 320×240, capacitive touch (see [below](#freenove-28-esp32-s3)) |
 
   Only the colours off? You don't need another file: in the frame's web page, *Settings*, tick **Swap red and blue** or **Invert colours**.
 - Installing from the page replaces everything on the board, so you'll set up WiFi again. Photos on the SD card are not touched.
@@ -43,6 +45,7 @@ pio run -e cyd2usb -t upload      # CYD with 2 USB ports (ST7789)
 pio run -e cyd2b -t upload        # CYD "2B" variant (inverted colours)
 pio run -e cyd35 -t upload        # 3.5" CYD, ST7796 480x320 (see below)
 pio run -e freenove4 -t upload      # Freenove 4.0" ESP32-S3, ST7796 480x320 (see below)
+pio run -e freenove28 -t upload     # Freenove 2.8" ESP32-S3, ILI9341 320x240 (see below)
 pio run -e cyd -t uploadfs        # splash image + favicon (data/ folder), once
 ```
 
@@ -69,6 +72,15 @@ The `freenove4` build is for the **Freenove FNK0104S** 4.0-inch display board: E
 - Built and tested on the FNK0104S 4.0-inch board. Freenove's other sizes (2.8", 3.5") use different displays and pins and would need their own build.
 
 
+## Freenove 2.8" ESP32-S3
+
+The `freenove28` build is for the **Freenove FNK0104B/AB** 2.8-inch display board: the same ESP32-S3 (16 MB flash, 8 MB PSRAM), capacitive touch, SDMMC card slot and ES8311 audio codec as the 4.0-inch board, with an ILI9341 320×240 screen. It shares the code in `2-Freenove4/` and works like the 4.0-inch build (on-screen WiFi setup, capacitive touch, no calibration), with these differences:
+
+- **Installing:** use installer button **6**. If the computer can't find the board, hold BOOT while plugging in the USB cable.
+- **Address:** the 2.8" frame answers at **http://photoframe28.local**, so it can run beside the other frames.
+- **Web updates:** upload `CYD-PhotoFrame-freenove28-update.bin` from a release on the `/update` page.
+- **Status:** new in 4.6.1. The boot and the WiFi picker have been seen working on a real board; the slideshow, sound and the rest follow the 4.0-inch build and have had little testing on this panel. Reports are welcome in the issues.
+
 ## First start
 
 1. Put a FAT32 SD card with a few `.jpg` photos in the slot (or add them later from the web page).
@@ -79,6 +91,7 @@ The `freenove4` build is for the **Freenove FNK0104S** 4.0-inch display board: E
 The frame keeps working without WiFi (it just shows the slideshow) and reconnects by itself when the network is back.
 To pick a different WiFi network later, **hold the BOOT button while powering on**. The frame remembers several networks and joins the strongest one it knows. A frame updated from 4.3 or older keeps its saved WiFi.
 If nobody touches a frame that has no WiFi saved for 3 minutes, it starts the slideshow without WiFi.
+To change the network without waiting for that, touch the middle of the picture to show the address screen and tap its **WiFi** button: the picker opens with no time limit and a **Cancel** row, and your saved networks stay.
 
 ## Touch and buttons
 
@@ -179,6 +192,7 @@ Conecta el marco al ordenador con un cable USB, pulsa un botón y listo: no hay 
   | **3. CYD2 alternativo** | `cyd2b` | ILI9341, colores invertidos |
   | **4. CYD de 3,5"** | `cyd35` | ST7796 480×320: el CYD de 3,5 pulgadas |
   | **5. Freenove 4" S3** | `freenove4` | Freenove FNK0104S de 4,0 pulgadas con ESP32-S3, ST7796 480×320, táctil capacitivo |
+  | **6. Freenove 2.8" S3** | `freenove28` | Freenove FNK0104B/AB de 2,8 pulgadas con ESP32-S3, ILI9341 320×240, táctil capacitivo |
 
   ¿Solo fallan los colores? No hace falta otro archivo: en la página web del marco, en *Ajustes*, marca **Intercambiar rojo y azul** o **Invertir colores**.
 - Instalar desde la página reemplaza todo lo de la placa, así que tendrás que configurar de nuevo el WiFi. Las fotos de la tarjeta SD no se tocan.
@@ -194,6 +208,7 @@ Conecta el marco al ordenador con un cable USB, pulsa un botón y listo: no hay 
 El marco sigue funcionando sin WiFi (solo muestra las fotos) y se reconecta solo cuando vuelve la red.
 Para elegir otra red WiFi más adelante, **mantén pulsado el botón BOOT al encenderlo**. El marco recuerda varias redes y se une a la más fuerte que conoce. Un marco actualizado desde la 4.3 o anterior conserva su WiFi.
 Si nadie toca un marco sin WiFi guardado durante 3 minutos, empieza la presentación sin WiFi.
+Para cambiar de red sin esperar, toca el centro de la imagen para ver la pantalla de la dirección y pulsa su botón **WiFi**: el selector se abre sin límite de tiempo y con una fila **Cancelar**, y las redes guardadas se conservan.
 
 ## Pantalla táctil y botones
 

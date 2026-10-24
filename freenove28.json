@@ -1,0 +1,16 @@
+{
+  "name": "PhotoFrame 4.6.1 (Freenove 2.8-inch ESP32-S3)",
+  "version": "4.6.1",
+  "builds": [
+    {
+      "chipFamily": "ESP32-S3",
+      "improv": false,
+      "parts": [
+        {
+          "path": "freenove28.bin",
+          "offset": 0
+        }
+      ]
+    }
+  ]
+}
