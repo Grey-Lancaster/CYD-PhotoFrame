@@ -263,9 +263,60 @@ static String fitText(const String &s, int maxW, int font) {
   return t + "...";
 }
 
+// The 2.8" panel (320x240) is too small for the 4" layout of the info and update screens.
+static bool compactScreen() {
+  return max(tft.width(), tft.height()) <= 320;
+}
+
+static void drawInfoWifiButton();
+
+static void displayShowInfoCompact(const String &ip) {
+  const bool portrait = tft.height() > tft.width();
+  const int W = tft.width();
+  tft.fillScreen(TFT_BLACK);
+  tft.setTextDatum(TL_DATUM);
+  tft.setTextColor(TFT_CYAN, TFT_BLACK);
+  tft.drawString("PhotoFrame", 8, 6, 4);
+  tft.setTextColor(TFT_WHITE, TFT_BLACK);
+  tft.drawString("Open in a browser:", 8, 34, 2);
+  tft.setTextColor(TFT_GREEN, TFT_BLACK);
+  tft.drawString(ip.length() ? ip : String("(not connected)"), 8, 52, 4);
+  tft.drawString(HOSTNAME ".local", 8, 86, 2);
+  String ssid = ip.length() ? WiFi.SSID() : String();
+  const int qrVersion = 2;  // holds "http://" + any IPv4 address
+  const int block = 4, quiet = 4;
+  const int side = (qrVersion * 4 + 17) * block + 2 * quiet;
+  const int maxW = portrait ? W - 16 : W - side - 24;
+  if (ssid.length()) {
+    tft.setTextColor(TFT_WHITE, TFT_BLACK);
+    tft.drawString("WiFi network:", 8, 108, 2);
+    tft.setTextColor(TFT_GREEN, TFT_BLACK);
+    tft.drawString(fitText(ssid, maxW, 2), 8, 126, 2);
+  }
+  tft.setTextColor(TFT_DARKGREY, TFT_BLACK);
+  const int hintY = portrait ? 258 : 176;
+  tft.drawString("Left/right: prev/next", 8, hintY, 2);
+  if (!portrait) tft.drawString("Middle: this screen", 8, hintY + 18, 2);
+
+  if (ip.length()) {
+    String url = "http://" + ip;
+    QRCode qr;
+    uint8_t qrData[qrcode_getBufferSize(qrVersion)];
+    qrcode_initText(&qr, qrData, qrVersion, ECC_MEDIUM, url.c_str());
+    int sd = qr.size * block + 2 * quiet;
+    int x0 = portrait ? (W - sd) / 2 : W - sd - 8;
+    int y0 = portrait ? 146 : 84;
+    tft.fillRect(x0, y0, sd, sd, TFT_WHITE);
+    for (int y = 0; y < qr.size; y++)
+      for (int x = 0; x < qr.size; x++)
+        if (qrcode_getModule(&qr, x, y)) tft.fillRect(x0 + quiet + x * block, y0 + quiet + y * block, block, block, TFT_BLACK);
+  }
+  drawInfoWifiButton();
+}
+
 void displayInfoWifiButton(int &x, int &y, int &w, int &h) {
   w = 100;
-  h = 34;
+  h = compactScreen() ? 30 : 34;
   x = tft.width() - w - 8;
   y = tft.height() - h - 8;
 }
@@ -281,6 +332,10 @@ static void drawInfoWifiButton() {
 }
 
 void displayShowInfo(const String &ip) {
+  if (compactScreen()) {
+    displayShowInfoCompact(ip);
+    return;
+  }
   tft.fillScreen(TFT_BLACK);
   tft.setTextDatum(TL_DATUM);
   tft.setTextColor(TFT_CYAN, TFT_BLACK);
@@ -332,16 +387,17 @@ void displayShowOta(const char *line, int percent) {
   static int lastPercent = -1;
   if (percent < 0 || lastPercent < 0 || percent < lastPercent) {
     tft.fillScreen(TFT_BLACK);
-    centered("Firmware update", 70, 4, TFT_CYAN);
-    centered("Do not power off", 190, 2, TFT_WHITE);
-    tft.drawRect(60, 130, tft.width() - 120, 28, TFT_WHITE);
+    centered("Firmware update", compactScreen() ? 40 : 70, 4, TFT_CYAN);
+    centered("Do not power off", compactScreen() ? 150 : 190, 2, TFT_WHITE);
+    tft.drawRect(60, compactScreen() ? 90 : 130, tft.width() - 120, 28, TFT_WHITE);
   }
   if (percent >= 0) {
-    tft.fillRect(62, 132, ((tft.width() - 124) * percent) / 100, 24, TFT_GREEN);
+    tft.fillRect(62, (compactScreen() ? 90 : 130) + 2, ((tft.width() - 124) * percent) / 100, 24, TFT_GREEN);
   }
   if (line) {
-    tft.fillRect(0, 240, tft.width(), 30, TFT_BLACK);
-    centered(line, 245, 2, TFT_YELLOW);
+    const int ly = compactScreen() ? 185 : 245;
+    tft.fillRect(0, ly - 5, tft.width(), 30, TFT_BLACK);
+    centered(line, ly, 2, TFT_YELLOW);
   }
   lastPercent = percent;
 }

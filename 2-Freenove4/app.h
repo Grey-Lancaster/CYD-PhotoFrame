@@ -5,8 +5,16 @@
 #include <TFT_eSPI.h>
 #include <functional>
 
-#define FW_VERSION "4.6"
+#define FW_VERSION "4.6.1"
+#ifdef BOARD_FREENOVE28
+#define HOSTNAME "photoframe28"  // 2.8" ILI9341 build (FNK0104B/AB); native panel is 240x320 portrait
+#define PANEL_LONG 320
+#define PANEL_SHORT 240
+#else
 #define HOSTNAME "photoframe4"  // not "photoframe", so a 4" and a CYD can run side by side
+#define PANEL_LONG 480
+#define PANEL_SHORT 320
+#endif
 
 // ---------------------------------------------------------------- pins (FNK0104S 4.0" ESP32-S3 display)
 // Display pins are set in platformio.ini (TFT_eSPI build flags).

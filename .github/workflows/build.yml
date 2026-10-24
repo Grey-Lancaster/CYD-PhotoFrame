@@ -25,6 +25,8 @@ jobs:
           - {env: cyd35,     chip: esp32,   boot: "0x1000", flash: "--flash_mode dio --flash_freq 40m --flash_size 4MB", fs: "0x3D0000"}
           # Freenove 4.0" ESP32-S3: bootloader at 0x0, DIO (QIO hangs the ROM), 2-Freenove4/partitions.csv
           - {env: freenove4, chip: esp32s3, boot: "0x0",    flash: "--flash_mode dio --flash_size 16MB",                fs: "0x510000"}
+          # Freenove 2.8" FNK0104B/AB ESP32-S3: same layout and partition table as the 4.0"
+          - {env: freenove28, chip: esp32s3, boot: "0x0",   flash: "--flash_mode dio --flash_size 16MB",                fs: "0x510000"}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
@@ -92,6 +94,7 @@ jobs:
             | **3. CYD2 alternate** | `cyd2b` | ILI9341, inverted colours |
             | **4. 3.5" CYD** | `cyd35` | ST7796 480×320: the 3.5-inch CYD (touch calibration on first start) |
             | **5. Freenove 4" S3** | `freenove4` | Freenove FNK0104S 4.0-inch ESP32-S3 display, ST7796 480×320, capacitive touch (WiFi is set up on its own screen) |
+            | **6. Freenove 2.8" S3** | `freenove28` | Freenove FNK0104B/AB 2.8-inch ESP32-S3 display, ILI9341 320×240, capacitive touch (answers at `photoframe28.local`) |
 
             Wrong button = white screen or a negative picture. Nothing is damaged, just try another one.
             If only the colours are off, you don't need another file: open the frame's web page, go to
@@ -104,6 +107,18 @@ jobs:
               Or: `esptool.py --chip esp32 write_flash 0x0 CYD-PhotoFrame-cyd-factory.bin`
             - **`*-update.bin`**: firmware only, for a frame that is already running: open
               `http://photoframe.local/update` and upload it. Keeps your WiFi login and settings.
+
+            ## What's new in 4.6.1
+
+            - **Fixes the WiFi picker showing "no networks" until the frame was powered off.** The ESP32 WiFi code
+              gives a scan only 6 seconds to finish, but a scan takes 6-7 seconds, so scans kept failing and Rescan
+              did nothing (TouchWifiProvisioner 1.6.8). Every board.
+            - **New board: Freenove FNK0104B/AB 2.8-inch ESP32-S3** (installer button 6, build `freenove28`):
+              ILI9341 320×240 with capacitive touch, same features as the 4-inch. It answers at
+              **http://photoframe28.local**. New in this release and lightly tested: the WiFi picker was seen working on a
+              real board; the rest follows the 4-inch build.
+            - Updating from 4.6: upload the `*-update.bin` for your build on the frame's `/update` page. That keeps
+              your WiFi and settings.
 
             ## What's new in 4.6
 

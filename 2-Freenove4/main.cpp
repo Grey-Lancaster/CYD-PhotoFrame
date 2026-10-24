@@ -299,7 +299,7 @@ static void startNetworkServices() {
 // ---------------------------------------------------------------- setup / loop
 void setup() {
   Serial.begin(115200);
-  Serial.println("\nPhotoFrame (Freenove 4\" S3) " FW_VERSION);
+  Serial.println("\nPhotoFrame (Freenove S3) " FW_VERSION);
   g_resetReason = resetReasonText(esp_reset_reason());
   Serial.println(String("Reset reason: ") + g_resetReason);
 
