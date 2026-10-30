@@ -108,6 +108,15 @@ jobs:
             - **`*-update.bin`**: firmware only, for a frame that is already running: open
               `http://photoframe.local/update` and upload it. Keeps your WiFi login and settings.
 
+            ## What's new in 4.6.2
+
+            - **Touch calibration on the CYD boards keeps your best attempt.** The calibration used to save only if all
+              five touches agreed within 12 pixels; on a noisy resistive panel that could fail every time, so the frame
+              asked again at every start and the WiFi picker used a rough guess and was hard to tap. It now keeps the
+              best of three tries (within 30 pixels). A clean calibration is still preferred.
+            - Updating from 4.6.1: upload the `*-update.bin` for your build on the frame's `/update` page. That keeps
+              your WiFi and settings.
+
             ## What's new in 4.6.1
 
             - **Fixes the WiFi picker showing "no networks" until the frame was powered off.** The ESP32 WiFi code
