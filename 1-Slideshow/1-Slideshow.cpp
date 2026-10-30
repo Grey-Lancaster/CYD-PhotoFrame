@@ -313,6 +313,8 @@ static void calibrateBitbang() {
   float fit[6];
   double rms = 0;
   bool ok = false;
+  float best[6] = {0};
+  double bestRms = 1e9;
 
   displayShowMessage("Touch calibration", "Touch each crosshair as shown", nullptr, TFT_CYAN);
   delay(2000);
@@ -346,7 +348,9 @@ static void calibrateBitbang() {
       sy[i] = settings.rotation >= 2 ? H - 1 - ty[i] : ty[i];
       Serial.printf("Touch cal %d: screen %d,%d raw %.0f,%.0f\n", i + 1, tx[i], ty[i], rx[i], ry[i]);
     }
-    ok = fitAffine(rx, ry, sx, sy, 5, fit, rms) && rms <= 12.0;
+    const bool fitted = fitAffine(rx, ry, sx, sy, 5, fit, rms);
+    if (fitted && rms < bestRms) { bestRms = rms; memcpy(best, fit, sizeof(best)); }
+    ok = fitted && rms <= 12.0;
     Serial.printf("Touch cal fit: %s, rms %.1f px\n", ok ? "ok" : "inconsistent", rms);
     if (!ok) {
       displayShowMessage("Taps were not consistent", "Let's try again", nullptr, TFT_ORANGE);
@@ -354,6 +358,9 @@ static void calibrateBitbang() {
     }
   }
   tft.fillScreen(TFT_BLACK);
+  // Resistive panels are noisy: if no attempt was tight, keep the best one (within 30 px) instead of asking again
+  // at every boot.
+  if (!ok && bestRms <= 30.0) { memcpy(fit, best, sizeof(fit)); ok = true; }
   if (ok) {
     memcpy(touchAff, fit, sizeof(touchAff));
     haveAff = true;
