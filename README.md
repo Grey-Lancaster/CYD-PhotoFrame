@@ -21,6 +21,7 @@ Plug the frame into your computer with a USB cable, click a button, done — no 
   | **4. 3.5" CYD** | `cyd35` | ST7796 480×320: the 3.5-inch CYD (see [below](#35-cyd)) |
   | **5. Freenove 4" S3** | `freenove4` | Freenove FNK0104S 4.0-inch ESP32-S3, ST7796 480×320, capacitive touch (see [below](#freenove-40-esp32-s3)) |
   | **6. Freenove 2.8" S3** | `freenove28` | Freenove FNK0104B/AB 2.8-inch ESP32-S3, ILI9341 320×240, capacitive touch (see [below](#freenove-28-esp32-s3)) |
+  | **7. 4.0" CYD** | `cyd40` | Freenove ESP32 Display 4.0-inch (plain ESP32, "FNK0103S" docs), ST7796 480×320, resistive touch; same pins as the 3.5" CYD. New in 4.7, lightly tested |
 
   Only the colours off? You don't need another file: in the frame's web page, *Settings*, tick **Swap red and blue** or **Invert colours**.
 - Installing from the page replaces everything on the board, so you'll set up WiFi again. Photos on the SD card are not touched.
@@ -184,6 +185,7 @@ Conecta el marco al ordenador con un cable USB, pulsa un botón y listo: no hay 
   | **4. CYD de 3,5"** | `cyd35` | ST7796 480×320: el CYD de 3,5 pulgadas |
   | **5. Freenove 4" S3** | `freenove4` | Freenove FNK0104S de 4,0 pulgadas con ESP32-S3, ST7796 480×320, táctil capacitivo |
   | **6. Freenove 2.8" S3** | `freenove28` | Freenove FNK0104B/AB de 2,8 pulgadas con ESP32-S3, ILI9341 320×240, táctil capacitivo |
+  | **7. CYD de 4,0"** | `cyd40` | Freenove ESP32 Display de 4,0 pulgadas (ESP32 normal), ST7796 480×320, táctil resistivo; mismos pines que el CYD de 3,5". Nuevo en 4.7, poco probado |
 
   ¿Solo fallan los colores? No hace falta otro archivo: en la página web del marco, en *Ajustes*, marca **Intercambiar rojo y azul** o **Invertir colores**.
 - Instalar desde la página reemplaza todo lo de la placa, así que tendrás que configurar de nuevo el WiFi. Las fotos de la tarjeta SD no se tocan.

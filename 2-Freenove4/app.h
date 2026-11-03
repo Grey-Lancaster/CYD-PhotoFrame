@@ -5,7 +5,7 @@
 #include <TFT_eSPI.h>
 #include <functional>
 
-#define FW_VERSION "4.6.3"
+#define FW_VERSION "4.7"
 #ifdef BOARD_FREENOVE28
 #define HOSTNAME "photoframe28"  // 2.8" ILI9341 build (FNK0104B/AB); native panel is 240x320 portrait
 #define PANEL_LONG 320
