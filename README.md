@@ -1,6 +1,6 @@
 # CYD PhotoFrame
 
-> **About this branch:** `gh-pages` hosts the [web installer](https://grey-lancaster.github.io/CYD-PhotoFrame/) (`index.html`, the manifest `.json` files and the factory images they flash). The source code is on the [`main` branch](https://github.com/Grey-Lancaster/CYD-PhotoFrame), and every build is on the [Releases page](https://github.com/Grey-Lancaster/CYD-PhotoFrame/releases). The images here are the **v4.6.3** release:
+> **About this branch:** `gh-pages` hosts the [web installer](https://grey-lancaster.github.io/CYD-PhotoFrame/) (`index.html`, the manifest `.json` files and the factory images they flash). The source code is on the [`main` branch](https://github.com/Grey-Lancaster/CYD-PhotoFrame), and every build is on the [Releases page](https://github.com/Grey-Lancaster/CYD-PhotoFrame/releases). The images here are the **v4.7** release:
 >
 > | File | Build |
 > | --- | --- |
@@ -10,6 +10,7 @@
 > | `cyd35.bin` | `cyd35` (3.5" CYD, ST7796 480×320) |
 > | `freenove4.bin` | `freenove4` (Freenove 4.0" ESP32-S3, ST7796 480×320) |
 > | `freenove28.bin` | `freenove28` (Freenove 2.8" ESP32-S3, ILI9341 320×240) |
+> | `cyd40.bin` | `cyd40` (Freenove ESP32 Display 4.0", ST7796 480×320) |
 
 A photo frame for the ESP32 **"Cheap Yellow Display" (CYD)** — a ~$15 board with a 320×240 touch screen, SD card slot and speaker. Photos live on the SD card, and you manage everything from your phone or PC through a built-in web page. It also runs on the **Freenove 4.0" ESP32-S3 display** (see [below](#freenove-40-esp32-s3)).
 
@@ -30,6 +31,7 @@ Plug the frame into your computer with a USB cable, click a button, done — no 
   | **4. 3.5" CYD** | `cyd35` | ST7796 480×320: the 3.5-inch CYD (see [below](#35-cyd)) |
   | **5. Freenove 4" S3** | `freenove4` | Freenove FNK0104S 4.0-inch ESP32-S3, ST7796 480×320, capacitive touch (see [below](#freenove-40-esp32-s3)) |
   | **6. Freenove 2.8" S3** | `freenove28` | Freenove FNK0104B/AB 2.8-inch ESP32-S3, ILI9341 320×240, capacitive touch (see [below](#freenove-28-esp32-s3)) |
+  | **7. 4.0" CYD** | `cyd40` | Freenove ESP32 Display 4.0-inch (plain ESP32), ST7796 480×320, resistive touch. New in 4.7, lightly tested |
 
   Only the colours off? You don't need another file: in the frame's web page, *Settings*, tick **Swap red and blue** or **Invert colours**.
 - Installing from the page replaces everything on the board, so you'll set up WiFi again. Photos on the SD card are not touched.

@@ -1,0 +1,16 @@
+{
+  "name": "CYD PhotoFrame 4.7 (4.0-inch, ST7796)",
+  "version": "4.7",
+  "builds": [
+    {
+      "chipFamily": "ESP32",
+      "improv": false,
+      "parts": [
+        {
+          "path": "cyd40.bin",
+          "offset": 0
+        }
+      ]
+    }
+  ]
+}
