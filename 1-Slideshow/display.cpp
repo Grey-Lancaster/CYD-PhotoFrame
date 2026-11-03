@@ -163,9 +163,12 @@ static int jpegDraw(JPEGDRAW *pDraw) {
   if (y1 > rs.dstH) y1 = rs.dstH;
   int w = x1 - x0, h = y1 - y0;
   if (w <= 0 || h <= 0) return 1;
-  if (w * h > (int)(sizeof(rsBuf) / sizeof(rsBuf[0]))) return 1;
+  if (w > (int)(sizeof(rsBuf) / sizeof(rsBuf[0]))) return 1;
+  // An enlarged block can be bigger than rsBuf (JPEGDEC hands over several MCUs at once): push it in row chunks.
+  const int rowsPer = (int)(sizeof(rsBuf) / sizeof(rsBuf[0])) / w;
   const uint16_t *src = pDraw->pPixels;
   uint16_t *out = rsBuf;
+  int cy0 = y0;
   for (int dy = y0; dy < y1; dy++) {
     int sy = (int)(((uint64_t)dy * rs.inv) >> 16) - pDraw->y;
     sy = constrain(sy, 0, ih - 1);
@@ -180,8 +183,12 @@ static int jpegDraw(JPEGDRAW *pDraw) {
         *out++ = src[sy * iw + sx];
       }
     }
+    if (dy + 1 - cy0 == rowsPer || dy + 1 == y1) {
+      tft.pushImage(rs.ox + x0, rs.oy + cy0, w, dy + 1 - cy0, rsBuf);
+      out = rsBuf;
+      cy0 = dy + 1;
+    }
   }
-  tft.pushImage(rs.ox + x0, rs.oy + y0, w, h, rsBuf);
   return 1;
 }
 
