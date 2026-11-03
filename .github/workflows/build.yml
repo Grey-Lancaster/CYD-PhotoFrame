@@ -108,6 +108,14 @@ jobs:
             - **`*-update.bin`**: firmware only, for a frame that is already running: open
               `http://photoframe.local/update` and upload it. Keeps your WiFi login and settings.
 
+            ## What's new in 4.6.3
+
+            - **Chrome no longer offers to translate the frame's web page.** The page already has its own EN / ES
+              switch (it follows the frame's language), but Chrome saw Spanish text, translated it to English and
+              left the pop-ups in Spanish. The page now tells Chrome not to translate it.
+            - Updating from 4.6.2: upload the `*-update.bin` for your build on the frame's `/update` page. That keeps
+              your WiFi and settings.
+
             ## What's new in 4.6.2
 
             - **Touch calibration on the CYD boards keeps your best attempt.** The calibration used to save only if all
