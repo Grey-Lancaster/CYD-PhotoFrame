@@ -2,10 +2,11 @@
 #pragma once
 
 static const char INDEX_HTML[] PROGMEM = R"rawliteral(<!doctype html>
-<html lang="en">
+<html lang="en" translate="no">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="google" content="notranslate">
 <title>PhotoFrame</title>
 <link rel="icon" href="/favicon.ico">
 <style>
