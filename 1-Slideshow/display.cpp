@@ -186,7 +186,7 @@ static int jpegDraw(JPEGDRAW *pDraw) {
 }
 
 // Decode an already opened image and show it as large as fits the screen,
-// centered. Images that are smaller than the screen are not enlarged.
+// centered. Images smaller than the screen are enlarged to fit (up to 4x).
 static bool decodeOpened() {
   int w = jpeg.getWidth();
   int h = jpeg.getHeight();
@@ -215,6 +215,19 @@ static bool decodeOpened() {
   } else {
     rs.dstW = w;
     rs.dstH = h;
+    // Smaller than the screen: enlarge it to fit (up to 4x), nearest-neighbour through the same resampler.
+    float fu = min((float)W / w, (float)H / h);
+    if (fu >= 1.1f) {
+      if (fu > 4.0f) fu = 4.0f;
+      rs.dw = w;
+      rs.dh = h;
+      rs.f = fu;
+      rs.dstW = min(W, (int)(w * fu + 0.5f));
+      rs.dstH = min(H, (int)(h * fu + 0.5f));
+      rs.active = true;
+      rs.inv = (uint32_t)(65536.0f / fu);
+      rs.smooth = false;
+    }
   }
   rs.ox = (W - rs.dstW) / 2;
   rs.oy = (H - rs.dstH) / 2;
